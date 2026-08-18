@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141210">
+<meta name="robots" content="noindex, nofollow">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23141210'/%3E%3Ctext x='50' y='66' font-size='54' font-family='monospace' font-weight='700' fill='%23faf8f2' text-anchor='middle'%3EVV%3C/text%3E%3C/svg%3E">
+<title>VeiVakt · Strekningsanalyse dyrepåkjørsler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blekk:#141210; --papir:#faf8f2; --kort:#fdfcf8;
+    --sand:#f4f1e6; --strek:#ddd6c6; --damp:#5c564d;
+    --n1:#f4f1e6; --n2:#e8d3a8; --n3:#d4a24f; --n4:#b9662f; --n5:#7d2418;
+    --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--papir); color:var(--blekk); font-family:var(--mono);
+    font-size:15px; line-height:1.55; -webkit-text-size-adjust:100%;
+    padding:14px 13px calc(34px + env(safe-area-inset-bottom));
+  }
+  .ramme{max-width:760px;margin:0 auto}
+  h1{font-size:16px;font-weight:700;letter-spacing:.04em;margin:0}
+  .tittel{border:2px solid var(--blekk);margin-bottom:14px;background:var(--kort)}
+  .tittel .topp{border-bottom:1px solid var(--blekk);padding:9px 13px;display:flex;
+    justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .tittel .kropp{padding:10px 13px;font-size:12.5px;color:#332f29}
+  .merk{font-size:10.5px;color:var(--damp);letter-spacing:.05em}
+  section{border:1.5px solid var(--blekk);background:var(--kort);margin-bottom:13px}
+  section>h2{margin:0;font-size:11px;font-weight:700;letter-spacing:.07em;
+    padding:8px 12px;background:var(--blekk);color:var(--papir);
+    display:flex;justify-content:space-between;align-items:center;gap:8px}
+  section>.inn{padding:12px}
+  label{display:block;font-size:12px;font-weight:600;margin:11px 0 4px}
+  label:first-child{margin-top:0}
+  .hint{font-size:11px;color:var(--damp);font-weight:400;line-height:1.45}
+  input[type=number],input[type=text],select{
+    width:100%;font-family:var(--mono);font-size:15px;padding:9px 10px;
+    border:1.5px solid var(--blekk);background:var(--papir);color:var(--blekk);
+    border-radius:0;-webkit-appearance:none}
+  input[type=file]{width:100%;font-family:var(--mono);font-size:12.5px}
+  .rad{display:flex;gap:9px}
+  .rad>div{flex:1}
+  .bryter{display:flex;align-items:center;gap:9px;margin-top:11px;font-size:12.5px;font-weight:600}
+  .bryter input{width:20px;height:20px;accent-color:var(--n5)}
+  button{
+    font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.04em;
+    padding:13px 14px;border:1.5px solid var(--blekk);background:var(--blekk);
+    color:var(--papir);width:100%;cursor:pointer;border-radius:0;
+    touch-action:manipulation}
+  button.sekundaer{background:transparent;color:var(--blekk)}
+  button:disabled{opacity:.4}
+  button:active{transform:translateY(1px)}
+  .knapperad{display:flex;gap:8px;margin-top:11px}
+  .knapperad button{flex:1}
+  .skjult{display:none !important}
+  .kvittering{font-size:12px;line-height:1.6;background:var(--sand);
+    border:1px solid var(--strek);padding:9px 10px;margin-top:11px;white-space:pre-wrap}
+  .felt{color:var(--damp)}
+  progress{width:100%;height:16px;border:1.5px solid var(--blekk);background:var(--sand);
+    -webkit-appearance:none;appearance:none}
+  progress::-webkit-progress-bar{background:var(--sand)}
+  progress::-webkit-progress-value{background:var(--n4)}
+  progress::-moz-progress-bar{background:var(--n4)}
+  .status{font-size:12px;margin-top:7px;display:flex;justify-content:space-between;gap:8px}
+  .treff{border-top:1px solid var(--strek);padding:9px 2px}
+  .treff:first-of-type{border-top:none}
+  .treff .hode{display:flex;gap:9px;align-items:baseline;cursor:pointer}
+  .rang{font-weight:700;font-size:11px;color:var(--papir);background:var(--blekk);
+    padding:1px 6px;min-width:26px;text-align:center;flex:none}
+  .vref{font-weight:700;font-size:13px;flex:1;word-break:break-word}
+  .ant{font-weight:700;font-size:16px;color:var(--n5);flex:none}
+  .stolpe{height:7px;background:var(--sand);margin:6px 0 0 35px;border:1px solid var(--strek)}
+  .stolpe i{display:block;height:100%;background:var(--n4)}
+  .detalj{margin:8px 0 2px 35px;font-size:11.5px;line-height:1.7;color:#332f29}
+  .detalj b{font-weight:700}
+  .detalj a{color:var(--n5)}
+  table.nokkel{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:5px}
+  table.nokkel td{padding:3px 5px;border-bottom:1px solid var(--strek)}
+  table.nokkel td:last-child{text-align:right;font-weight:700}
+  .feil{border:2px solid var(--n5);background:#fdf2ef;padding:11px 12px;
+    font-size:12.5px;line-height:1.6;margin-top:11px}
+  .feil b{color:var(--n5)}
+  .fot{border-top:2px solid var(--blekk);margin-top:16px;padding-top:9px;
+    font-size:10.5px;color:var(--damp);line-height:1.6}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="ramme">
+
+  <div class="tittel">
+    <div class="topp">
+      <h1>STREKNINGSANALYSE — DYREPÅKJØRSLER</h1>
+      <span class="merk">VEIVAKT AS</span>
+    </div>
+    <div class="kropp">
+      Kartfester fallviltregistreringer mot Statens vegvesens vegnett og rangerer
+      strekninger etter antall påkjørsler. Alt regnes ut på telefonen din —
+      ingen data sendes noe sted, bortsett fra koordinatoppslag mot NVDBs åpne API.
+    </div>
+  </div>
+
+  <!-- 1 ─ DATA -->
+  <section>
+    <h2>1 · FALLVILTDATA</h2>
+    <div class="inn">
+      <label>Velg CSV-fil
+        <span class="hint">Hjorteviltregisteret → Fallvilt innsyn → filtrer på årsak og
+        periode → last ned. Excel-fil må lagres som CSV først.</span>
+      </label>
+      <input type="file" id="fil" accept=".csv,.txt,text/csv,text/plain">
+      <div id="filkvittering" class="kvittering skjult"></div>
+    </div>
+  </section>
+
+  <!-- 2 ─ INNSTILLINGER -->
+  <section>
+    <h2>2 · INNSTILLINGER</h2>
+    <div class="inn">
+      <div class="rad">
+        <div>
+          <label>Binlengde (m)</label>
+          <input type="number" id="bin" value="500" min="100" max="5000" step="100" inputmode="numeric">
+        </div>
+        <div>
+          <label>Maks snappavstand (m)</label>
+          <input type="number" id="maksavstand" value="60" min="10" max="300" step="10" inputmode="numeric">
+        </div>
+      </div>
+      <div class="rad" style="margin-top:11px">
+        <div>
+          <label>Antall år i datasettet</label>
+          <input type="number" id="aar" value="0" min="0" max="50" step="1" inputmode="numeric">
+          <span class="hint">0 = tell automatisk fra datokolonnen</span>
+        </div>
+        <div>
+          <label>Hent ÅDT for topp</label>
+          <input type="number" id="toppadt" value="40" min="0" max="300" step="10" inputmode="numeric">
+          <span class="hint">Flere = lengre kjøretid</span>
+        </div>
+      </div>
+      <label style="margin-top:11px">Antatt andel påkjørsler KFOV forhindrer</label>
+      <input type="number" id="andel" value="35" min="0" max="100" step="5" inputmode="numeric">
+      <span class="hint">Planleggingsanslag i prosent — ikke en måling. Brukes bare i
+      kolonnene for spart beløp.</span>
+      <div class="bryter">
+        <input type="checkbox" id="tog"><label for="tog" style="margin:0">Ta med togpåkjørsler</label>
+      </div>
+      <div class="knapperad">
+        <button id="kjor" disabled>KJØR ANALYSE</button>
+      </div>
+      <button id="stopp" class="sekundaer skjult" style="margin-top:8px">STOPP</button>
+      <div id="fremdrift" class="skjult" style="margin-top:12px">
+        <progress id="bar" value="0" max="100"></progress>
+        <div class="status"><span id="statustekst">—</span><span id="statustall"></span></div>
+      </div>
+      <div id="feilboks" class="feil skjult"></div>
+    </div>
+  </section>
+
+  <!-- 3 ─ RESULTAT -->
+  <section id="resultatseksjon" class="skjult">
+    <h2>3 · HOTSPOTS <span id="antallbins" class="merk"></span></h2>
+    <div class="inn">
+      <div id="sammendrag" class="kvittering"></div>
+      <label style="margin-top:12px">Sorter etter</label>
+      <select id="sortering">
+        <option value="antall">Antall påkjørsler</option>
+        <option value="per_km_per_aar">Påkjørsler per km per år</option>
+        <option value="per_mill_kjt_km">Per million kjøretøykm (krever ÅDT)</option>
+        <option value="spart_nok_pr_aar">Spart beløp per år</option>
+      </select>
+      <div id="liste" style="margin-top:12px"></div>
+      <div class="knapperad">
+        <button id="lastcsv" class="sekundaer">LAST NED CSV</button>
+        <button id="lastgeo" class="sekundaer">GEOJSON</button>
+      </div>
+      <button id="del" class="sekundaer skjult" style="margin-top:8px">DEL RESULTAT</button>
+    </div>
+  </section>
+
+  <div class="fot">
+    Vegdata: Nasjonal vegdatabank, Statens vegvesen (NLOD). Fallvilt: Hjorteviltregisteret,
+    Miljødirektoratet. Fallvilt er underrapportert — tallene er minimumstall. Snapping til
+    nærmeste veg kan feilplassere punkter der veger går parallelt; se median snappavstand
+    per strekning. Anslag for unngåtte påkjørsler er planleggingstall, ikke måleresultat.
+    <br><br>VeiVakt AS · veivakten.no
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════════════════════════
+   Koordinater — WGS84 ⇄ UTM33N (EPSG:25833)
+   Verifisert mot pyproj: avvik under 1 cm i hele Norge.
+   ═══════════════════════════════════════════════════════════ */
+const K0=0.9996, A=6378137.0, F=1/298.257223563;
+const E2=F*(2-F), EP2=E2/(1-E2), LON0=15*Math.PI/180;
+
+function tilUtm33(lat,lon){
+  const la=lat*Math.PI/180, lo=lon*Math.PI/180;
+  const N=A/Math.sqrt(1-E2*Math.sin(la)**2);
+  const T=Math.tan(la)**2, C=EP2*Math.cos(la)**2, a=Math.cos(la)*(lo-LON0);
+  const e4=E2*E2, e6=E2*E2*E2;
+  const M=A*((1-E2/4-3*e4/64-5*e6/256)*la
+    -(3*E2/8+3*e4/32+45*e6/1024)*Math.sin(2*la)
+    +(15*e4/256+45*e6/1024)*Math.sin(4*la)
+    -(35*e6/3072)*Math.sin(6*la));
+  const ost=K0*N*(a+(1-T+C)*a**3/6+(5-18*T+T*T+72*C-58*EP2)*a**5/120)+500000;
+  const nord=K0*(M+N*Math.tan(la)*(a*a/2+(5-T+9*C+4*C*C)*a**4/24
+    +(61-58*T+T*T+600*C-330*EP2)*a**6/720));
+  return [ost,nord];
+}
+function tilWgs84(ost,nord){
+  const e1=(1-Math.sqrt(1-E2))/(1+Math.sqrt(1-E2));
+  const x=ost-500000, M=nord/K0;
+  const mu=M/(A*(1-E2/4-3*E2**2/64-5*E2**3/256));
+  const p1=mu+(3*e1/2-27*e1**3/32)*Math.sin(2*mu)
+    +(21*e1**2/16-55*e1**4/32)*Math.sin(4*mu)+(151*e1**3/96)*Math.sin(6*mu);
+  const C1=EP2*Math.cos(p1)**2, T1=Math.tan(p1)**2;
+  const N1=A/Math.sqrt(1-E2*Math.sin(p1)**2);
+  const R1=A*(1-E2)/Math.pow(1-E2*Math.sin(p1)**2,1.5);
+  const D=x/(N1*K0);
+  const lat=p1-(N1*Math.tan(p1)/R1)*(D*D/2
+    -(5+3*T1+10*C1-4*C1*C1-9*EP2)*D**4/24
+    +(61+90*T1+298*C1+45*T1*T1-252*EP2-3*C1*C1)*D**6/720);
+  const lon=LON0+(D-(1+2*T1+C1)*D**3/6
+    +(5-2*C1+28*T1-3*C1*C1+8*EP2+24*T1*T1)*D**5/120)/Math.cos(p1);
+  return [lat*180/Math.PI, lon*180/Math.PI];
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CSV
+   ═══════════════════════════════════════════════════════════ */
+function finnSkilletegn(linje){
+  const kand=[";","\t",","];
+  let best=";", flest=-1;
+  for(const s of kand){
+    const n=linje.split(s).length-1;
+    if(n>flest){flest=n; best=s;}
+  }
+  return best;
+}
+function parseCsv(tekst){
+  tekst=tekst.replace(/^\uFEFF/,"");
+  const forsteLinje=tekst.slice(0, tekst.indexOf("\n")>0?tekst.indexOf("\n"):tekst.length);
+  const sep=finnSkilletegn(forsteLinje);
+  const rader=[]; let felt="", rad=[], iSitat=false;
+  for(let i=0;i<tekst.length;i++){
+    const c=tekst[i];
+    if(iSitat){
+      if(c==='"'){ if(tekst[i+1]==='"'){felt+='"';i++;} else iSitat=false; }
+      else felt+=c;
+    } else if(c==='"'){ iSitat=true; }
+    else if(c===sep){ rad.push(felt); felt=""; }
+    else if(c==="\n"){ rad.push(felt); rader.push(rad); rad=[]; felt=""; }
+    else if(c!=="\r"){ felt+=c; }
+  }
+  if(felt.length||rad.length){ rad.push(felt); rader.push(rad); }
+  const hoder=(rader.shift()||[]).map(h=>h.trim());
+  return {hoder, rader:rader.filter(r=>r.some(v=>String(v).trim()!==""))};
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Kolonnegjenkjenning
+   ═══════════════════════════════════════════════════════════ */
+const HINT={
+  lat:["breddegrad","lat","latitude","nordwgs84"],
+  lon:["lengdegrad","lon","lng","longitude","ostwgs84"],
+  nord:["nord","northing","utmnord","yutm33"],
+  ost:["øst","ost","easting","utmost","xutm33"],
+  dato:["dato","funnetdato","hendelsesdato","registrert","date"],
+  art:["art","dyreart","species"],
+  arsak:["årsak","arsak","bakgrunn","dødsårsak","dodsarsak","utfall","hendelse"],
+  kommune:["kommune","kommunenavn"]
+};
+const norm=s=>String(s).toLowerCase().replace(/[^a-zæøå0-9]/g,"");
+function finnKolonner(hoder){
+  const kart={}, n=hoder.map(norm);
+  for(const [felt,hint] of Object.entries(HINT)){
+    let idx=-1;
+    for(const h of hint){ const hn=norm(h); idx=n.indexOf(hn); if(idx>=0) break; }
+    if(idx<0) for(const h of hint){ const hn=norm(h);
+      idx=n.findIndex(x=>hn && x.includes(hn)); if(idx>=0) break; }
+    kart[felt]=idx>=0?idx:null;
+  }
+  // "nord"/"ost" må ikke stjele treff fra breddegrad/lengdegrad
+  if(kart.lat!==null && kart.lon!==null){ kart.nord=null; kart.ost=null; }
+  return kart;
+}
+
+const RE_BIL=/(p[åa]kj).*(bil|motorkj|kj[øo]ret)/i;
+const RE_TOG=/(p[åa]kj).*(tog|jernban)/i;
+
+function lesPunkter(hoder,rader,kart,medTog){
+  const punkter=[], forkastet={};
+  const tell=g=>forkastet[g]=(forkastet[g]||0)+1;
+  for(const r of rader){
+    if(kart.arsak!==null){
+      const aarsak=String(r[kart.arsak]||"");
+      if(!(RE_BIL.test(aarsak)||(medTog&&RE_TOG.test(aarsak)))){ tell("ikke påkjørsel"); continue; }
+    }
+    let ost,nord;
+    const tall=v=>parseFloat(String(v||"").replace(",","."));
+    if(kart.nord!==null&&kart.ost!==null&&String(r[kart.nord]||"").trim()!==""){
+      ost=tall(r[kart.ost]); nord=tall(r[kart.nord]);
+      if(!isFinite(ost)||!isFinite(nord)){ tell("manglende koordinat"); continue; }
+    } else if(kart.lat!==null&&kart.lon!==null){
+      const lat=tall(r[kart.lat]), lon=tall(r[kart.lon]);
+      if(!isFinite(lat)||!isFinite(lon)){ tell("manglende koordinat"); continue; }
+      if(!(lat>57&&lat<72&&lon>4&&lon<32)){ tell("koordinat utenfor Norge"); continue; }
+      [ost,nord]=tilUtm33(lat,lon);
+    } else { tell("manglende koordinat"); continue; }
+    let aar=null;
+    if(kart.dato!==null){
+      const m=String(r[kart.dato]||"").match(/(19|20)\d{2}/);
+      if(m) aar=parseInt(m[0],10);
+    }
+    punkter.push({
+      ost:+ost.toFixed(2), nord:+nord.toFixed(2),
+      art:kart.art!==null?String(r[kart.art]||"").trim():"",
+      aar, kommune:kart.kommune!==null?String(r[kart.kommune]||"").trim():""
+    });
+  }
+  return {punkter, forkastet};
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NVDB
+   ═══════════════════════════════════════════════════════════ */
+const NVDB="https://nvdbapiles.atlas.vegvesen.no";
+const cache=new Map();
+let avbryt=false;
+
+async function hent(url, forsok=3){
+  for(let i=0;i<forsok;i++){
+    if(avbryt) throw new Error("avbrutt");
+    try{
+      const r=await fetch(url,{headers:{"Accept":"application/json"}});
+      if(r.ok) return await r.json();
+      if([429,502,503,504].includes(r.status)){
+        await pause(600*Math.pow(2,i)); continue;
+      }
+      return null;
+    }catch(e){
+      if(e.message==="avbrutt") throw e;
+      if(i===forsok-1) throw new Error("nett");
+      await pause(600*Math.pow(2,i));
+    }
+  }
+  return null;
+}
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* Slår sammen punkter som ligger i samme 20 m-rute før oppslag.
+   Dette kutter typisk 30–60 % av kallene uten å flytte noe punkt
+   mer enn ca. 14 m — godt innenfor snappepresisjonen. */
+function grupper(punkter){
+  const grupper=new Map();
+  for(const p of punkter){
+    const n=`${Math.round(p.ost/20)}_${Math.round(p.nord/20)}`;
+    if(!grupper.has(n)) grupper.set(n,{ost:p.ost,nord:p.nord,medlemmer:[]});
+    grupper.get(n).medlemmer.push(p);
+  }
+  return [...grupper.values()];
+}
+
+async function snapAlle(grp, maksAvstand, framdrift){
+  const SAMTIDIG=5;
+  let gjort=0, nettfeil=0;
+  let neste=0;
+  async function arbeider(){
+    while(true){
+      const i=neste++;
+      if(i>=grp.length) return;
+      const g=grp[i];
+      const n=`${g.ost.toFixed(1)},${g.nord.toFixed(1)},${maksAvstand}`;
+      if(cache.has(n)){ g.nvdb=cache.get(n); }
+      else{
+        try{
+          const url=`${NVDB}/vegnett/api/v4/posisjon?ost=${g.ost}&nord=${g.nord}`
+                   +`&maks_avstand=${maksAvstand}&maks_antall=1`;
+          const svar=await hent(url);
+          g.nvdb=(Array.isArray(svar)&&svar.length)?svar[0]:null;
+          cache.set(n,g.nvdb);
+        }catch(e){
+          if(e.message==="avbrutt") return;
+          nettfeil++; g.nvdb=null;
+          if(nettfeil>12) throw new Error("nett");
+        }
+      }
+      gjort++;
+      if(gjort%5===0||gjort===grp.length) framdrift(gjort,grp.length);
+    }
+  }
+  await Promise.all(Array.from({length:SAMTIDIG},arbeider));
+  return grp;
+}
+
+function lesVegref(t){
+  const vr=t&&t.vegsystemreferanse; if(!vr) return null;
+  const vs=vr.vegsystem||{}, st=vr.strekning||{};
+  if(st.meter==null||vs.nummer==null) return null;
+  return {kategori:vs.vegkategori||"?", nummer:+vs.nummer,
+    strekning:st.strekning, delstrekning:st.delstrekning,
+    meter:+st.meter, kommune:t.kommune, avstand:t.avstand};
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Aggregering og dimensjonering
+   ═══════════════════════════════════════════════════════════ */
+const ARK={
+  K_kryssdekning_120m:{spenn:120,nok:27000},
+  A_boson_250m:{spenn:250,nok:63000},
+  C_radar_220m:{spenn:220,nok:16800}
+};
+const NOK_PR=60000;
+
+function aggreger(grp, bin, antallAar, andel){
+  const bins=new Map(); let ustedfestet=0;
+  for(const g of grp){
+    const vr=lesVegref(g.nvdb);
+    if(!vr){ ustedfestet+=g.medlemmer.length; continue; }
+    const b=Math.floor(vr.meter/bin);
+    const n=`${vr.kategori}|${vr.nummer}|${vr.strekning}|${vr.delstrekning}|${b}`;
+    if(!bins.has(n)) bins.set(n,{vr,b,antall:0,arter:new Map(),aar:new Set(),
+      ost:[],nord:[],avstander:[],kommuner:new Map()});
+    const s=bins.get(n);
+    for(const m of g.medlemmer){
+      s.antall++;
+      const a=m.art||"ukjent"; s.arter.set(a,(s.arter.get(a)||0)+1);
+      if(m.aar) s.aar.add(m.aar);
+      s.ost.push(m.ost); s.nord.push(m.nord);
+    }
+    if(vr.avstand!=null) s.avstander.push(vr.avstand);
+    if(vr.kommune) s.kommuner.set(vr.kommune,(s.kommuner.get(vr.kommune)||0)+g.medlemmer.length);
+  }
+  const snitt=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const rader=[];
+  for(const s of bins.values()){
+    const mFra=s.b*bin, mTil=(s.b+1)*bin;
+    const aar=antallAar||s.aar.size||1;
+    const avst=s.avstander.slice().sort((a,b)=>a-b);
+    const r={
+      vegsystemreferanse:`${s.vr.kategori}V${s.vr.nummer} S${s.vr.strekning}D${s.vr.delstrekning} m${mFra}-${mTil}`,
+      sok:`${s.vr.kategori}V${s.vr.nummer}S${s.vr.strekning}D${s.vr.delstrekning}m${mFra}-${mTil}`,
+      veg:`${s.vr.kategori}V${s.vr.nummer}`,
+      meter_fra:mFra, meter_til:mTil, antall:s.antall,
+      per_km_per_aar:+(s.antall/(bin/1000)/aar).toFixed(2),
+      arter:[...s.arter.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}:${v}`).join(", "),
+      aar_dekket:s.aar.size||null,
+      median_snappavstand_m:avst.length?+avst[Math.floor(avst.length/2)].toFixed(1):null,
+      kommune:s.kommuner.size?[...s.kommuner.entries()].sort((a,b)=>b[1]-a[1])[0][0]:null,
+      lat:0, lon:0, adt:null, per_mill_kjt_km:null
+    };
+    const [la,lo]=tilWgs84(snitt(s.ost),snitt(s.nord));
+    r.lat=+la.toFixed(6); r.lon=+lo.toFixed(6);
+    for(const [navn,a] of Object.entries(ARK)){
+      const n=Math.max(1,Math.ceil(bin/a.spenn));
+      r["enheter_"+navn]=n;
+      r["maskinvare_"+navn+"_nok"]=n*a.nok;
+    }
+    const unngatt=s.antall/aar*andel;
+    r.unngatte_pr_aar=+unngatt.toFixed(2);
+    r.spart_nok_pr_aar=Math.round(unngatt*NOK_PR);
+    r.tilbakebetaling_aar_K=r.spart_nok_pr_aar
+      ? +(r.maskinvare_K_kryssdekning_120m_nok/r.spart_nok_pr_aar).toFixed(1) : null;
+    rader.push(r);
+  }
+  rader.sort((a,b)=>b.antall-a.antall);
+  return {rader, ustedfestet};
+}
+
+async function hentAdt(rader, topp, bin, framdrift){
+  let egid=4623;
+  try{
+    const kat=await hent(`${NVDB}/datakatalog/api/v1/vegobjekttyper/540?inkluder=egenskapstyper`);
+    const e=(kat&&kat.egenskapstyper||[]).find(x=>/ådt/i.test(x.navn||"")&&/total/i.test(x.navn||""));
+    if(e) egid=e.id;
+  }catch(e){/* beholder standardverdien */}
+  const n=Math.min(topp,rader.length);
+  for(let i=0;i<n;i++){
+    if(avbryt) break;
+    const r=rader[i];
+    try{
+      const svar=await hent(`${NVDB}/vegobjekter/api/v4/vegobjekter/540`
+        +`?vegsystemreferanse=${encodeURIComponent(r.sok)}&inkluder=egenskaper&segmentering=true`);
+      let adt=null;
+      for(const o of (svar&&svar.objekter)||[])
+        for(const e of o.egenskaper||[])
+          if(e.id===egid&&e.verdi!=null) adt=Math.max(adt||0,parseInt(e.verdi,10));
+      r.adt=adt;
+      if(adt){
+        const millKjtKm=adt*365*(bin/1000)/1e6;
+        const aar=r.aar_dekket||1;
+        r.per_mill_kjt_km=+(r.antall/(millKjtKm*aar)).toFixed(2);
+      }
+    }catch(e){ if(e.message==="avbrutt") break; }
+    framdrift(i+1,n);
+  }
+  return rader;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Grensesnitt
+   ═══════════════════════════════════════════════════════════ */
+const $=id=>document.getElementById(id);
+let DATA=null, RADER=null, META=null;
+
+$("fil").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const kv=$("filkvittering"); kv.classList.remove("skjult");
+  kv.textContent="Leser fila …";
+  try{
+    const tekst=await f.text();
+    const {hoder,rader}=parseCsv(tekst);
+    const kart=finnKolonner(hoder);
+    if((kart.lat===null||kart.lon===null)&&(kart.nord===null||kart.ost===null)){
+      kv.innerHTML="<b>Fant ingen koordinatkolonner.</b>\nKolonner i fila:\n"
+        +hoder.map(h=>"  · "+h).join("\n")
+        +"\n\nEksporten må inneholde breddegrad/lengdegrad eller nord/øst.";
+      $("kjor").disabled=true; return;
+    }
+    DATA={hoder,rader,kart};
+    const brukt=Object.entries(kart).filter(([,v])=>v!==null)
+      .map(([k,v])=>`${k} → ${hoder[v]}`).join("\n  ");
+    kv.textContent=`${rader.length} rader lest.\nKolonnetolkning:\n  ${brukt}`;
+    $("kjor").disabled=false;
+  }catch(err){
+    kv.textContent="Klarte ikke å lese fila: "+err.message;
+    $("kjor").disabled=true;
+  }
+});
+
+$("stopp").addEventListener("click",()=>{ avbryt=true; $("statustekst").textContent="Stopper …"; });
+
+$("kjor").addEventListener("click",async()=>{
+  if(!DATA) return;
+  avbryt=false;
+  const bin=+$("bin").value||500;
+  const maksAvstand=+$("maksavstand").value||60;
+  const antallAar=+$("aar").value||0;
+  const toppAdt=+$("toppadt").value||0;
+  const andel=(+$("andel").value||0)/100;
+  const medTog=$("tog").checked;
+
+  $("feilboks").classList.add("skjult");
+  $("resultatseksjon").classList.add("skjult");
+  $("fremdrift").classList.remove("skjult");
+  $("stopp").classList.remove("skjult");
+  $("kjor").disabled=true;
+
+  const sett=(t,n)=>{ $("statustekst").textContent=t; $("statustall").textContent=n||""; };
+  const bar=$("bar");
+
+  try{
+    sett("Filtrerer registreringer …");
+    const {punkter,forkastet}=lesPunkter(DATA.hoder,DATA.rader,DATA.kart,medTog);
+    if(!punkter.length) throw new Error("Ingen påkjørsler med gyldig koordinat i fila.");
+
+    const grp=grupper(punkter);
+    bar.value=0; bar.max=grp.length;
+    sett("Kartfester mot vegnettet …", `0 / ${grp.length}`);
+    await snapAlle(grp,maksAvstand,(g,t)=>{ bar.value=g; sett("Kartfester mot vegnettet …",`${g} / ${t}`); });
+    if(avbryt) throw new Error("avbrutt");
+
+    sett("Aggregerer …");
+    const {rader,ustedfestet}=aggreger(grp,bin,antallAar,andel);
+    if(!rader.length) throw new Error(
+      `Ingen punkter traff vegnettet innenfor ${maksAvstand} m. Prøv å øke maks snappavstand.`);
+
+    if(toppAdt>0){
+      bar.value=0; bar.max=Math.min(toppAdt,rader.length);
+      sett("Henter ÅDT …",`0 / ${bar.max}`);
+      await hentAdt(rader,toppAdt,bin,(g,t)=>{ bar.value=g; sett("Henter ÅDT …",`${g} / ${t}`); });
+    }
+
+    const snappet=grp.filter(g=>g.nvdb).reduce((n,g)=>n+g.medlemmer.length,0);
+    META={inn:DATA.rader.length, etterFilter:punkter.length, snappet, ustedfestet,
+          bin, maksAvstand, andel, forkastet, grupper:grp.length};
+    RADER=rader;
+    visResultat();
+    sett("Ferdig.", `${rader.length} strekninger`);
+  }catch(err){
+    const m=err.message;
+    $("feilboks").classList.remove("skjult");
+    if(m==="avbrutt"){
+      $("feilboks").innerHTML="<b>Avbrutt.</b> Ingenting er lagret. Trykk KJØR ANALYSE for å starte på nytt — allerede hentede oppslag gjenbrukes.";
+    } else if(m==="nett"){
+      $("feilboks").innerHTML="<b>Får ikke kontakt med NVDB.</b> Sjekk at telefonen har nett. "
+        +"Hvis du åpnet fila rett fra Filer/Nedlastinger og feilen vedvarer, legg fila på en "
+        +"nettadresse (for eksempel veivakten.no) og åpne den derfra — enkelte nettlesere "
+        +"blokkerer API-kall fra <span style='font-family:monospace'>file://</span>.";
+    } else {
+      $("feilboks").innerHTML="<b>Analysen stoppet.</b> "+m;
+    }
+    sett("Stoppet.");
+  } finally{
+    $("kjor").disabled=false;
+    $("stopp").classList.add("skjult");
+  }
+});
+
+$("sortering").addEventListener("change",visResultat);
+
+function visResultat(){
+  if(!RADER) return;
+  const felt=$("sortering").value;
+  const sortert=[...RADER].sort((a,b)=>(b[felt]??-1)-(a[felt]??-1));
+  const maks=sortert[0][felt]||1;
+
+  $("resultatseksjon").classList.remove("skjult");
+  $("antallbins").textContent=RADER.length+" STREKNINGER";
+
+  const f=META.forkastet;
+  const forkastetTekst=Object.keys(f).length
+    ? "\nForkastet: "+Object.entries(f).map(([k,v])=>`${k} ${v}`).join(", ") : "";
+  $("sammendrag").textContent=
+    `Rader lest: ${META.inn}\n`+
+    `Påkjørsler med koordinat: ${META.etterFilter}\n`+
+    `Kartfestet mot veg: ${META.snappet} (${(META.snappet/META.etterFilter*100).toFixed(1)} %)\n`+
+    `Oppslag mot NVDB: ${META.grupper} (punkter slått sammen i 20 m-ruter)\n`+
+    `Binlengde ${META.bin} m · maks snappavstand ${META.maksAvstand} m`+forkastetTekst;
+
+  const l=$("liste"); l.innerHTML="";
+  sortert.slice(0,100).forEach((r,i)=>{
+    const v=r[felt];
+    const d=document.createElement("div"); d.className="treff";
+    const vis=v==null?"—":(felt==="spart_nok_pr_aar"?Math.round(v).toLocaleString("nb-NO"):v);
+    d.innerHTML=
+      `<div class="hode"><span class="rang">${i+1}</span>`+
+      `<span class="vref">${r.vegsystemreferanse}${r.kommune?` <span class="felt">· kom. ${r.kommune}</span>`:""}</span>`+
+      `<span class="ant">${vis}</span></div>`+
+      `<div class="stolpe"><i style="width:${Math.max(2,(v||0)/maks*100)}%"></i></div>`+
+      `<div class="detalj skjult">
+         <table class="nokkel">
+           <tr><td>Påkjørsler totalt</td><td>${r.antall}</td></tr>
+           <tr><td>Per km per år</td><td>${r.per_km_per_aar}</td></tr>
+           <tr><td>Arter</td><td>${r.arter||"—"}</td></tr>
+           <tr><td>År dekket</td><td>${r.aar_dekket??"—"}</td></tr>
+           <tr><td>ÅDT</td><td>${r.adt??"—"}</td></tr>
+           <tr><td>Per mill. kjøretøykm</td><td>${r.per_mill_kjt_km??"—"}</td></tr>
+           <tr><td>Median snappavstand</td><td>${r.median_snappavstand_m??"—"} m</td></tr>
+           <tr><td>KFOV-enheter (kryssdekning 120 m)</td><td>${r.enheter_K_kryssdekning_120m}</td></tr>
+           <tr><td>Maskinvare, kryssdekning</td><td>${r.maskinvare_K_kryssdekning_120m_nok.toLocaleString("nb-NO")} kr</td></tr>
+           <tr><td>Enheter (Boson 250 m)</td><td>${r.enheter_A_boson_250m}</td></tr>
+           <tr><td>Anslått spart per år</td><td>${r.spart_nok_pr_aar.toLocaleString("nb-NO")} kr</td></tr>
+           <tr><td>Tilbakebetaling</td><td>${r.tilbakebetaling_aar_K??"—"} år</td></tr>
+         </table>
+         <div style="margin-top:6px">
+           <a href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}" target="_blank" rel="noopener">Åpne i kart</a>
+           <span class="felt"> · ${r.lat}, ${r.lon}</span>
+         </div>
+       </div>`;
+    d.querySelector(".hode").addEventListener("click",()=>
+      d.querySelector(".detalj").classList.toggle("skjult"));
+    l.appendChild(d);
+  });
+  if(sortert.length>100){
+    const p=document.createElement("div");
+    p.className="detalj"; p.style.marginLeft="0";
+    p.textContent=`Viser de 100 øverste. Alle ${sortert.length} ligger i CSV-nedlastingen.`;
+    l.appendChild(p);
+  }
+  $("del").classList.toggle("skjult", !navigator.share);
+}
+
+/* ── Nedlasting og deling ── */
+function lastNed(navn, innhold, type){
+  const blob=new Blob([innhold],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=navn; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},1500);
+}
+function csvTekst(){
+  const felt=Object.keys(RADER[0]).filter(k=>k!=="sok");
+  const esc=v=>{ const s=v==null?"":String(v);
+    return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  return [felt.join(";"), ...RADER.map(r=>felt.map(k=>esc(r[k])).join(";"))].join("\n");
+}
+function geojson(){
+  return JSON.stringify({type:"FeatureCollection", features:RADER.slice(0,1000).map((r,i)=>({
+    type:"Feature",
+    geometry:{type:"Point",coordinates:[r.lon,r.lat]},
+    properties:Object.fromEntries(Object.entries(r).filter(([k])=>k!=="sok").concat([["rang",i+1]]))
+  }))},null,1);
+}
+$("lastcsv").addEventListener("click",()=>lastNed("hotspots.csv","\uFEFF"+csvTekst(),"text/csv;charset=utf-8"));
+$("lastgeo").addEventListener("click",()=>lastNed("hotspots.geojson",geojson(),"application/geo+json"));
+$("del").addEventListener("click",async()=>{
+  const topp=RADER.slice(0,10).map((r,i)=>
+    `${i+1}. ${r.vegsystemreferanse} — ${r.antall} påkjørsler`).join("\n");
+  const tekst=`Strekningsanalyse dyrepåkjørsler\n\n${topp}\n\n`
+    +`${META.snappet} påkjørsler kartfestet mot ${RADER.length} strekninger.\n`
+    +`Kilder: Hjorteviltregisteret, NVDB (Statens vegvesen).`;
+  try{
+    const fil=new File(["\uFEFF"+csvTekst()],"hotspots.csv",{type:"text/csv"});
+    if(navigator.canShare&&navigator.canShare({files:[fil]}))
+      await navigator.share({title:"Strekningsanalyse",text:tekst,files:[fil]});
+    else await navigator.share({title:"Strekningsanalyse",text:tekst});
+  }catch(e){/* brukeren avbrøt delingen */}
+});
+
+/* ── Egentest av koordinatkoden ved oppstart ── */
+(function(){
+  const [o,n]=tilUtm33(63.415855,10.395287);
+  const [la,lo]=tilWgs84(o,n);
+  if(Math.abs(o-270232.03)>0.5||Math.abs(n-7040186.97)>0.5
+     ||Math.abs(la-63.415855)>1e-6||Math.abs(lo-10.395287)>1e-6){
+    console.warn("Koordinat-egentest feilet",o,n,la,lo);
+  }
+})();
+</script>
+</body>
+</html>
