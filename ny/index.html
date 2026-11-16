@@ -1247,7 +1247,7 @@ function aggreger(grp,bin,antallAar){
   return {rader, ustedfestet};
 }
 /* ══ Raskere oppslag: lager i nettleseren, flere samtidige oppslag og nedbremsing ══ */
-const LAGER_DAGER=60, SAMTIDIG=10;
+const LAGER_DAGER=60, SAMTIDIG=8;
 let lagerDb=null, lagerKlar=null, lagerNye=[];
 const posNokkel=(g,maks)=>g.ost.toFixed(1)+","+g.nord.toFixed(1)+","+maks;
 function slank(t){
@@ -1291,21 +1291,24 @@ function tomLager(){
   try{ if(lagerDb) lagerDb.transaction("posisjon","readwrite").objectStore("posisjon").clear(); }catch(e){}
   oppdater();
 }
-/* Felles nedbremsing: sier NVDB stopp, venter alle oppslag, og antall samtidige oppslag halveres. */
-let ventTil=0, samtidigNaa=SAMTIDIG;
+/* Felles fartsstyring: NVDB oppgir hvor mange oppslag som gjenstår i kvoten (x-ratelimit-remaining).
+   Verktøyet senker farten når kvoten nærmer seg tom, slik at NVDB ikke trenger å avvise oppslag. */
+let ventTil=0, samtidigNaa=SAMTIDIG, kvote=null;
 async function hentTrygt(url){
   for(let i=0;i<6;i++){
     if(avbryt) throw new Error("avbrutt");
     const v=ventTil-Date.now(); if(v>0) await pause(v);
+    if(kvote!==null&&kvote<12){ await pause(kvote<5?450:200); }
     let r;
     try{ r=await fetch(url,{headers:{"Accept":"application/json"}}); }
     catch(e){ if(i>=3) throw new Error("nett"); await pause(500*2**i); continue; }
+    const k=parseInt(r.headers.get("x-ratelimit-remaining"),10); kvote=isFinite(k)?k:null;
     if(r.ok) return {ok:true,data:await r.json()};
     if(r.status===404) return {ok:true,data:null};
     if([429,502,503,504].includes(r.status)){
       const ra=parseFloat(r.headers.get("Retry-After"));
-      ventTil=Math.max(ventTil,Date.now()+(isFinite(ra)?Math.min(ra,30)*1000:800*2**i));
-      if(r.status===429) samtidigNaa=Math.max(3,Math.floor(samtidigNaa/2));
+      ventTil=Math.max(ventTil,Date.now()+(isFinite(ra)?Math.min(ra,30)*1000:(r.status===429?500:800)*2**Math.min(i,3)));
+      if(r.status===429) samtidigNaa=Math.max(4,samtidigNaa-1);
       continue;
     }
     return {ok:false,data:null};
@@ -1482,7 +1485,7 @@ async function hentVeidata(rader,topp,bin,valgte,framdrift){
       framdrift(++gjort,n);
     }
   }
-  await Promise.all(Array.from({length:Math.max(1,Math.min(4,Math.floor(samtidigNaa/Math.max(1,valgte.length))||1,n))},arbeider));
+  await Promise.all(Array.from({length:Math.max(1,Math.min(4,Math.round(SAMTIDIG/Math.max(1,valgte.length)),n))},arbeider));
   return feil;
 }
 
@@ -1584,7 +1587,7 @@ function oppdater(){
   let lagret=0;
   if(bil){ const grp=grupper(UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet")), maks=+$("maksavstand").value;
     for(const g of grp) if(cache.has(posNokkel(g,maks))) lagret++;
-    const nye=grp.length-lagret, min=Math.ceil(nye/SAMTIDIG*0.35/60);
+    const nye=grp.length-lagret, min=Math.ceil(nye/15/60);
     $("togmerknad").textContent+=` Det gir om lag ${tallf(grp.length)} oppslag`+(lagret?`, og ${tallf(lagret)} av dem er lagret fra før`:"")
       +(min>=2?`. De nye kan ta rundt ${tallf(min)} minutter. Velg et fylke eller en kommune for å gå raskere.`:"."); }
   $("tomlager").classList.toggle("skjult",!cache.size);
