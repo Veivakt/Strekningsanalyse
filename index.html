@@ -768,6 +768,8 @@ details ul{margin:6px 0 0;padding-left:20px}details li{margin:4px 0}
 header.topp .merke{margin-left:0}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+.lenke{background:none;border:0;padding:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
 </style>
 </head>
 <body>
@@ -840,6 +842,7 @@ header.topp .merke{margin-left:0}
     <h2 id="t4"><span class="nr">4</span>Finn strekningene</h2>
     <p>Hver påkjørsel med bil knyttes til nærmeste vei i Nasjonal vegdatabank, og hver påkjørsel med tog til nærmeste bane i Bane NORs jernbanenett. Påkjørslene samles i like lange strekninger. Da ser du hvilke strekninger som har flest påkjørsler.</p>
     <p class="hint" id="togmerknad"></p>
+    <p class="hint skjult" id="tomlager">Oppslag mot veinettet lagres i nettleseren din i 60 dager, så neste kjøring går raskere. <button type="button" class="lenke" id="tomlagerknapp">Tøm lagrede oppslag</button></p>
     <div class="rad2">
       <label class="felt">Lengde på strekning<select id="bin"><option value="250">250 m</option><option value="500" selected>500 m</option><option value="1000">1 km</option><option value="2000">2 km</option></select></label>
       <label class="felt">Største avstand til vei eller bane<select id="maksavstand"><option value="30">30 m</option><option value="60" selected>60 m</option><option value="100">100 m</option><option value="200">200 m</option></select></label>
@@ -888,6 +891,7 @@ header.topp .merke{margin-left:0}
     <h2 id="t6">Metode og begrensninger</h2>
     <details><summary>Slik regner verktøyet</summary><ul>
       <li>Punkter som ligger mindre enn 20 meter fra hverandre, slås sammen før oppslaget mot veinettet.</li>
+      <li>Svarene fra veinettet lagres i nettleseren din i 60 dager. Da trenger ikke verktøyet å spørre på nytt om de samme punktene. Ingenting sendes til VeiVakt.</li>
       <li>Hvert punkt knyttes til nærmeste vei innenfor avstanden du velger. Punkter som ligger lenger unna, holdes utenfor.</li>
       <li>Strekningene følger meterverdiene i vegsystemreferansen, for eksempel «FV33 S3D1 m1500–2000».</li>
       <li>Påkjørsler per kilometer per år = antall delt på strekningens lengde og antall år i utvalget.</li>
@@ -1242,6 +1246,103 @@ function aggreger(grp,bin,antallAar){
   rader.sort((a,b)=>b.antall-a.antall);
   return {rader, ustedfestet};
 }
+/* ══ Raskere oppslag: lager i nettleseren, flere samtidige oppslag og nedbremsing ══ */
+const LAGER_DAGER=60, SAMTIDIG=8;
+let lagerDb=null, lagerKlar=null, lagerNye=[];
+const posNokkel=(g,maks)=>g.ost.toFixed(1)+","+g.nord.toFixed(1)+","+maks;
+function slank(t){
+  if(!t||!t.vegsystemreferanse) return null;
+  const vs=t.vegsystemreferanse.vegsystem||{}, st=t.vegsystemreferanse.strekning||{};
+  return {vegsystemreferanse:{vegsystem:{vegkategori:vs.vegkategori,nummer:vs.nummer},
+    strekning:{strekning:st.strekning,delstrekning:st.delstrekning,meter:st.meter}},kommune:t.kommune,avstand:t.avstand};
+}
+function aapneLager(){
+  if(lagerKlar) return lagerKlar;
+  lagerKlar=new Promise(ferdig=>{
+    try{
+      const f=indexedDB.open("veivakt-viltkart",1);
+      f.onupgradeneeded=()=>f.result.createObjectStore("posisjon");
+      f.onerror=()=>ferdig(0);
+      f.onsuccess=()=>{
+        lagerDb=f.result;
+        try{
+          const tx=lagerDb.transaction("posisjon","readwrite"), st=tx.objectStore("posisjon"), eldst=Date.now()-LAGER_DAGER*864e5;
+          let n=0;
+          st.openCursor().onsuccess=e=>{
+            const c=e.target.result; if(!c) return;
+            if(c.value&&c.value.t>eldst){ cache.set(c.key,c.value.d); n++; } else c.delete();
+            c.continue();
+          };
+          tx.oncomplete=()=>ferdig(n); tx.onerror=tx.onabort=()=>ferdig(n);
+        }catch(e){ ferdig(0); }
+      };
+    }catch(e){ ferdig(0); }
+  });
+  return lagerKlar;
+}
+function lagre(n,d){ lagerNye.push([n,d]); if(lagerNye.length>=400) skrivLager(); }
+function skrivLager(){
+  if(!lagerDb||!lagerNye.length) return;
+  const ut=lagerNye; lagerNye=[];
+  try{ const st=lagerDb.transaction("posisjon","readwrite").objectStore("posisjon"), t=Date.now(); for(const [n,d] of ut) st.put({d,t},n); }catch(e){}
+}
+function tomLager(){
+  cache.clear(); lagerNye=[];
+  try{ if(lagerDb) lagerDb.transaction("posisjon","readwrite").objectStore("posisjon").clear(); }catch(e){}
+  if(ALLE&&ALLE.length) oppdater(); else $("tomlager").classList.add("skjult");
+}
+/* Felles fartsstyring: NVDB oppgir hvor mange oppslag som gjenstår i kvoten (x-ratelimit-remaining).
+   Verktøyet senker farten når kvoten nærmer seg tom, slik at NVDB ikke trenger å avvise oppslag. */
+let ventTil=0, samtidigNaa=SAMTIDIG, kvote=null;
+async function hentTrygt(url){
+  for(let i=0;i<6;i++){
+    if(avbryt) throw new Error("avbrutt");
+    const v=ventTil-Date.now(); if(v>0) await pause(v);
+    if(kvote!==null&&kvote<18){ await pause(kvote<8?500:250); }
+    let r;
+    try{ r=await fetch(url,{headers:{"Accept":"application/json"}}); }
+    catch(e){ if(i>=3) throw new Error("nett"); await pause(500*2**i); continue; }
+    const k=parseInt(r.headers.get("x-ratelimit-remaining"),10); kvote=isFinite(k)?k:null;
+    if(r.ok) return {ok:true,data:await r.json()};
+    if(r.status===404) return {ok:true,data:null};
+    if([429,502,503,504].includes(r.status)){
+      const ra=parseFloat(r.headers.get("Retry-After"));
+      ventTil=Math.max(ventTil,Date.now()+(isFinite(ra)?Math.min(ra,30)*1000:(r.status===429?500:800)*2**Math.min(i,3)));
+      if(r.status===429) samtidigNaa=Math.max(4,samtidigNaa-1);
+      continue;
+    }
+    return {ok:false,data:null};
+  }
+  throw new Error("nett");
+}
+async function snapAlle(grp,maksAvstand,framdrift){
+  await aapneLager();
+  let gjort=0, nettfeil=0, neste=0; samtidigNaa=SAMTIDIG;
+  async function arbeider(nr){
+    for(;;){
+      if(nr>=samtidigNaa) return;
+      const i=neste++; if(i>=grp.length) return;
+      const g=grp[i], n=posNokkel(g,maksAvstand);
+      if(cache.has(n)) g.nvdb=cache.get(n);
+      else{
+        try{
+          const s=await hentTrygt(`${NVDB}/vegnett/api/v4/posisjon?ost=${g.ost}&nord=${g.nord}&maks_avstand=${maksAvstand}&maks_antall=1`);
+          if(s.ok){ g.nvdb=slank(Array.isArray(s.data)&&s.data.length?s.data[0]:null); cache.set(n,g.nvdb); lagre(n,g.nvdb); }
+          else{ g.nvdb=null; nettfeil++; }
+        }catch(e){
+          if(e.message==="avbrutt") return;
+          nettfeil++; g.nvdb=null;
+          if(nettfeil>12){ skrivLager(); throw new Error("nett"); }
+        }
+      }
+      gjort++;
+      if(gjort%10===0||gjort===grp.length) framdrift(gjort,grp.length);
+    }
+  }
+  try{ await Promise.all(Array.from({length:SAMTIDIG},(_,nr)=>arbeider(nr))); }
+  finally{ skrivLager(); }
+  framdrift(grp.length,grp.length);
+}
 /* ══ Jernbanenett fra Bane NOR ══ */
 const JB_FIL="/jernbane.json", JB_CELLE=2000;
 const JB_WFS="https://wfs.geonorge.no/skwms1/wfs.banenettverk?service=WFS&version=2.0.0&request=GetFeature&typeNames=app:Banelenke&srsName=urn:ogc:def:crs:EPSG::25833";
@@ -1369,19 +1470,22 @@ function tolkVeidata(nokkel,svar,r,bin){
   else if(nokkel==="belysning") r.belysning=obj.length?"Ja":"Nei";
 }
 async function hentVeidata(rader,topp,bin,valgte,framdrift){
-  const n=Math.min(topp,rader.length); let feil=0;
-  for(let i=0;i<n;i++){
-    if(avbryt) break;
-    const r=rader[i];
-    await Promise.all(valgte.map(async k=>{
-      try{
-        const svar=await hent(`${NVDB}/vegobjekter/api/v4/vegobjekter/${VEIDATA[k].id}`
-          +`?vegsystemreferanse=${encodeURIComponent(r.sok)}&inkluder=egenskaper&segmentering=true`);
-        if(svar) tolkVeidata(k,svar,r,bin); else feil++;
-      }catch(e){ if(e.message!=="avbrutt") feil++; }
-    }));
-    framdrift(i+1,n);
+  const n=Math.min(topp,rader.length); let feil=0, neste=0, gjort=0;
+  async function arbeider(){
+    for(;;){
+      const i=neste++; if(i>=n||avbryt) return;
+      const r=rader[i];
+      await Promise.all(valgte.map(async k=>{
+        try{
+          const s=await hentTrygt(`${NVDB}/vegobjekter/api/v4/vegobjekter/${VEIDATA[k].id}`
+            +`?vegsystemreferanse=${encodeURIComponent(r.sok)}&inkluder=egenskaper&segmentering=true`);
+          if(s.ok&&s.data) tolkVeidata(k,s.data,r,bin); else feil++;
+        }catch(e){ if(e.message!=="avbrutt") feil++; }
+      }));
+      framdrift(++gjort,n);
+    }
   }
+  await Promise.all(Array.from({length:Math.max(1,Math.min(4,Math.round(SAMTIDIG/Math.max(1,valgte.length)),n))},arbeider));
   return feil;
 }
 
@@ -1480,9 +1584,13 @@ function oppdater(){
   $("togmerknad").textContent=[bil?`${tallf(bil)} påkjørsler med bil blir knyttet til veinettet.`:"",
     tog?`${tallf(tog)} påkjørsler med tog blir knyttet til jernbanenettet fra Bane NOR.`:"",
     !bil&&!tog?"Utvalget har ingen påkjørsler med bil eller tog.":""].filter(Boolean).join(" ");
-  if(bil){ const g=new Set(); for(const p of UTVALG) if(p.arsak!=="tog"&&p.arsak!=="annet") g.add(Math.round(p.ost/20)+"_"+Math.round(p.nord/20));
-    const min=Math.ceil(g.size/5*0.35/60);
-    $("togmerknad").textContent+=` Det gir om lag ${tallf(g.size)} oppslag`+(min>=2?`, som kan ta rundt ${tallf(min)} minutter. Velg et fylke eller en kommune for å gå raskere.`:"."); }
+  let lagret=0;
+  if(bil){ const grp=grupper(UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet")), maks=+$("maksavstand").value;
+    for(const g of grp) if(cache.has(posNokkel(g,maks))) lagret++;
+    const nye=grp.length-lagret, min=Math.ceil(nye/15/60);
+    $("togmerknad").textContent+=` Det gir om lag ${tallf(grp.length)} oppslag`+(lagret?`, og ${tallf(lagret)} av dem er lagret fra før`:"")
+      +(min>=2?`. De nye kan ta rundt ${tallf(min)} minutter. Velg et fylke eller en kommune for å gå raskere.`:"."); }
+  $("tomlager").classList.toggle("skjult",!cache.size);
   $("kjor").disabled=!bil&&!tog;
   if(RADER) $("utdatert").classList.remove("skjult");
   if($("lag").value==="punkter") visTegnPunkter();
@@ -1822,6 +1930,11 @@ $("lagre").addEventListener("click",()=>{
   if(Math.abs(o-270232.03)>0.5||Math.abs(n-7040186.97)>0.5||Math.abs(la-63.415855)>1e-5||Math.abs(lo-10.395287)>1e-5)
     console.warn("Koordinat-egentest feilet",o,n,la,lo);
 })();
+
+/* ══ Lagrede oppslag ══ */
+$("tomlagerknapp").addEventListener("click",tomLager);
+$("maksavstand").addEventListener("change",()=>{ if(ALLE&&ALLE.length) oppdater(); });
+aapneLager().then(()=>{ if(typeof ALLE!=="undefined"&&ALLE&&ALLE.length) oppdater(); });
 </script>
 </body>
 </html>
