@@ -833,8 +833,18 @@ header.topp .merke{margin-left:0}
       <label class="felt">Lengde på strekning<select id="bin"><option value="250">250 m</option><option value="500" selected>500 m</option><option value="1000">1 km</option><option value="2000">2 km</option></select></label>
       <label class="felt">Største avstand til vei<select id="maksavstand"><option value="30">30 m</option><option value="60" selected>60 m</option><option value="100">100 m</option><option value="200">200 m</option></select></label>
     </div>
-    <label class="felt">Hent trafikkmengde (ÅDT) for<select id="toppadt"><option value="0">ingen strekninger</option><option value="40" selected>de 40 øverste</option><option value="100">de 100 øverste</option><option value="300">de 300 øverste</option></select>
-      <small>Trafikkmengden gjør det mulig å skille strekninger med mye vilt fra strekninger med mye trafikk.</small></label>
+    <fieldset><legend>Veidata fra Nasjonal vegdatabank</legend>
+      <div class="chips" id="cVeidata">
+        <label class="chip"><input type="checkbox" value="adt" checked><span>Trafikkmengde (ÅDT)</span></label>
+        <label class="chip"><input type="checkbox" value="fartsgrense" checked><span>Fartsgrense</span></label>
+        <label class="chip"><input type="checkbox" value="skiltet_viltfare"><span>Skiltet viltfare</span></label>
+        <label class="chip"><input type="checkbox" value="viltgjerde"><span>Viltgjerde</span></label>
+        <label class="chip"><input type="checkbox" value="belysning"><span>Veibelysning</span></label>
+      </div>
+      <p class="hint" style="margin-top:6px">Velg hva som skal hentes for hver strekning. Trafikkmengden gjør det mulig å skille strekninger med mye vilt fra strekninger med mye trafikk.</p>
+    </fieldset>
+    <label class="felt">Hent veidata for<select id="toppadt"><option value="0">ingen strekninger</option><option value="40" selected>de 40 øverste</option><option value="100">de 100 øverste</option><option value="300">de 300 øverste</option><option value="100000">alle strekninger</option></select>
+      <small>Flere strekninger og flere typer veidata tar lengre tid.</small></label>
     <div class="knapper">
       <button type="button" class="knapp" id="kjor">Finn strekningene</button>
       <button type="button" class="knapp sek skjult" id="stopp">Stopp</button>
@@ -878,7 +888,9 @@ header.topp .merke{margin-left:0}
       <li>Der to veier går parallelt, kan et punkt bli knyttet til feil vei. Se kolonnen «Avstand til vei».</li>
       <li>Togpåkjørsler vises på kartet, men knyttes ikke til veinettet.</li>
       <li>Faste strekningsgrenser kan dele en opphopning i to. Prøv gjerne en annen strekningslengde.</li>
-      <li>ÅDT er hentet for hele strekningen. Der det finnes flere verdier, brukes den høyeste.</li>
+      <li>Veidata gjelder hele strekningen. Der det finnes flere verdier for ÅDT eller fartsgrense, vises den høyeste i tabellen.</li>
+      <li>«Skiltet viltfare» betyr at strekningen er registrert med viltfareskilt. «Viltgjerde» og «Veibelysning» viser om det er registrert noe slikt på strekningen, ikke om det dekker hele.</li>
+      <li>Vegdatabanken er ikke alltid fullstendig. «Nei» betyr at ingenting er registrert.</li>
     </ul></details>
     <details><summary>Kilder</summary><ul>
       <li>Fallvilt: Hjorteviltregisteret, Miljødirektoratet.</li>
@@ -1207,35 +1219,44 @@ function aggreger(grp,bin,antallAar){
   rader.sort((a,b)=>b.antall-a.antall);
   return {rader, ustedfestet};
 }
-async function hentAdt(rader,topp,bin,framdrift){
-  let egid=4623;
-  try{
-    const kat=await hent(`${NVDB}/datakatalog/api/v1/vegobjekttyper/540?inkluder=egenskapstyper`);
-    const e=((kat&&kat.egenskapstyper)||[]).find(x=>/ådt/i.test(x.navn||"")&&/total/i.test(x.navn||""));
-    if(e) egid=e.id;
-  }catch(e){/* standardverdi */}
-  const n=Math.min(topp,rader.length);
+/* ══ Veidata fra NVDB ══ */
+const VEIDATA={
+  adt:{id:540,navn:"Trafikkmengde (ÅDT)",kol:[["adt","ÅDT",1],["per_mill_kjt_km","Per mill. kjøretøykm",1]]},
+  fartsgrense:{id:105,navn:"Fartsgrense",kol:[["fartsgrense","Fartsgrense",1]]},
+  skiltet_viltfare:{id:291,navn:"Skiltet viltfare",kol:[["skiltet_viltfare","Skiltet viltfare",0]]},
+  viltgjerde:{id:7,navn:"Viltgjerde",kol:[["viltgjerde","Viltgjerde",0]]},
+  belysning:{id:86,navn:"Veibelysning",kol:[["belysning","Belysning",0]]}
+};
+function tolkVeidata(nokkel,svar,r,bin){
+  const obj=(svar&&svar.objekter)||[];
+  const verdier=re=>{ const ut=[]; for(const o of obj) for(const e of o.egenskaper||[]) if(re.test(e.navn||"")&&e.verdi!=null) ut.push(e.verdi); return ut; };
+  if(nokkel==="adt"){
+    const v=verdier(/^ådt.*total/i).map(x=>parseInt(x,10)).filter(isFinite);
+    r.adt=v.length?Math.max(...v):null;
+    r.per_mill_kjt_km=r.adt?+(r.antall/((r.adt*365*(bin/1000)/1e6)*(r.aar_dekket||1))).toFixed(2):null;
+  } else if(nokkel==="fartsgrense"){
+    const v=[...new Set(verdier(/^fartsgrense$/i).map(Number).filter(isFinite))].sort((a,b)=>a-b);
+    r.fartsgrense=v.length?v[v.length-1]:null; r.fartsgrenser=v.length>1?v.join(" og "):null;
+  } else if(nokkel==="skiltet_viltfare") r.skiltet_viltfare=obj.length?"Ja":"Nei";
+  else if(nokkel==="viltgjerde") r.viltgjerde=verdier(/^bruksområde$/i).some(x=>/viltgjerde/i.test(String(x)))?"Ja":"Nei";
+  else if(nokkel==="belysning") r.belysning=obj.length?"Ja":"Nei";
+}
+async function hentVeidata(rader,topp,bin,valgte,framdrift){
+  const n=Math.min(topp,rader.length); let feil=0;
   for(let i=0;i<n;i++){
     if(avbryt) break;
     const r=rader[i];
-    try{
-      const svar=await hent(`${NVDB}/vegobjekter/api/v4/vegobjekter/540`
-        +`?vegsystemreferanse=${encodeURIComponent(r.sok)}&inkluder=egenskaper&segmentering=true`);
-      let adt=null;
-      for(const o of (svar&&svar.objekter)||[])
-        for(const e of o.egenskaper||[])
-          if(e.id===egid&&e.verdi!=null) adt=Math.max(adt||0,parseInt(e.verdi,10));
-      r.adt=adt;
-      if(adt){
-        const aar=r.aar_dekket||1;
-        r.per_mill_kjt_km=+(r.antall/((adt*365*(bin/1000)/1e6)*aar)).toFixed(2);
-      }
-    }catch(e){ if(e.message==="avbrutt") break; }
+    await Promise.all(valgte.map(async k=>{
+      try{
+        const svar=await hent(`${NVDB}/vegobjekter/api/v4/vegobjekter/${VEIDATA[k].id}`
+          +`?vegsystemreferanse=${encodeURIComponent(r.sok)}&inkluder=egenskaper&segmentering=true`);
+        if(svar) tolkVeidata(k,svar,r,bin); else feil++;
+      }catch(e){ if(e.message!=="avbrutt") feil++; }
+    }));
     framdrift(i+1,n);
   }
-  return rader;
+  return feil;
 }
-
 
 /* ══ Tilstand ══ */
 const $=id=>document.getElementById(id);
@@ -1380,7 +1401,9 @@ function strekPopup(r){
   return `<div class="pop"><h3>${esc(r.vegsystemreferanse)}</h3><table>
     ${rad("Kommune",esc(r.kommune??"–"))}${rad("Påkjørsler",tallf(r.antall))}${rad("Per km per år",tallf(r.per_km_per_aar))}
     ${rad("Arter",esc(r.arter||"–"))}${rad("Per år",esc(r.per_aar||"–"))}
-    ${rad("Trafikk (ÅDT)",r.adt!=null?tallf(r.adt):"–")}${rad("Per mill. kjøretøykm",r.per_mill_kjt_km!=null?tallf(r.per_mill_kjt_km):"–")}
+    ${r.adt!=null?rad("Trafikk (ÅDT)",tallf(r.adt))+rad("Per mill. kjøretøykm",r.per_mill_kjt_km!=null?tallf(r.per_mill_kjt_km):"–"):""}
+    ${r.fartsgrense!=null?rad("Fartsgrense",(r.fartsgrenser||r.fartsgrense)+" km/t"):""}${r.skiltet_viltfare?rad("Skiltet viltfare",r.skiltet_viltfare):""}
+    ${r.viltgjerde?rad("Viltgjerde",r.viltgjerde):""}${r.belysning?rad("Veibelysning",r.belysning):""}
     ${rad("Avstand til vei",r.median_avstand_veg_m!=null?tallf(r.median_avstand_veg_m)+" m":"–")}</table>
     ${mnd.some(v=>v>0)?`<div class="mini" role="img" aria-label="Fordeling per måned">${mnd.map((v,i)=>`<i style="height:${Math.max(3,v/mm*100)}%" title="${MND[i]}: ${v}"></i>`).join("")}</div><div style="font-size:11px;color:#46617F;display:flex;justify-content:space-between"><span>jan</span><span>des</span></div>`:""}
     <div style="margin-top:6px"><a href="https://norgeskart.no/#!?project=norgeskart&layers=1002&zoom=15&lat=${r.lat}&lon=${r.lon}" target="_blank" rel="noopener">Norgeskart</a> ·
@@ -1480,6 +1503,7 @@ $("kjor").addEventListener("click",async()=>{
   if(!veipunkter.length) return;
   avbryt=false;
   const bin=+$("bin").value, maksAvstand=+$("maksavstand").value, toppAdt=+$("toppadt").value;
+  const valgte=[...document.querySelectorAll("#cVeidata input:checked")].map(e=>e.value);
   const aar=new Set(veipunkter.map(p=>p.aar).filter(Boolean));
   const antallAar=FILTER.aarFra!==null&&aar.size?FILTER.aarTil-FILTER.aarFra+1:0;
   $("feilboks").classList.add("skjult"); $("fremdrift").classList.remove("skjult");
@@ -1494,13 +1518,14 @@ $("kjor").addEventListener("click",async()=>{
     sett("Samler i strekninger …");
     const {rader,ustedfestet}=aggreger(grp,bin,antallAar);
     if(!rader.length) throw new Error(`Ingen påkjørsler lå nærmere en vei enn ${maksAvstand} m. Prøv en større avstand.`);
-    if(toppAdt>0){
-      bar.value=0; bar.max=Math.min(toppAdt,rader.length); sett("Henter trafikkmengde …",`0 av ${bar.max}`);
-      await hentAdt(rader,toppAdt,bin,(g,t)=>{ bar.value=g; sett("Henter trafikkmengde …",`${g} av ${t}`); });
+    let veifeil=0;
+    if(toppAdt>0&&valgte.length){
+      bar.value=0; bar.max=Math.min(toppAdt,rader.length); sett("Henter veidata …",`0 av ${bar.max}`);
+      veifeil=await hentVeidata(rader,toppAdt,bin,valgte,(g,t)=>{ bar.value=g; sett("Henter veidata …",`${g} av ${t}`); });
     }
     RADER=rader; streklag=null;
     META=Object.assign(META||{},{antall:veipunkter.length, snappet:veipunkter.length-ustedfestet, ustedfestet, bin, maksAvstand,
-      oppslag:grp.length, antallAar, kjort:new Date().toISOString().slice(0,10)});
+      oppslag:grp.length, antallAar, veidata:valgte, veidataFor:Math.min(toppAdt,rader.length), veifeil, kjort:new Date().toISOString().slice(0,10)});
     $("utdatert").classList.add("skjult");
     visStrekninger();
     sett("Ferdig.",`${tallf(rader.length)} strekninger`);
@@ -1513,8 +1538,13 @@ $("kjor").addEventListener("click",async()=>{
     sett("Stoppet.");
   } finally{ $("kjor").disabled=false; $("stopp").classList.add("skjult"); }
 });
-const KOL=[["vegsystemreferanse","Strekning",0],["kommune","Kommune",0],["antall","Påkjørsler",1],["per_km_per_aar","Per km per år",1],
-  ["adt","ÅDT",1],["per_mill_kjt_km","Per mill. kjøretøykm",1],["verste_maaned","Flest i",0],["median_avstand_veg_m","Avstand til vei (m)",1],["arter","Arter",0]];
+function kolonner(){
+  const k=[["vegsystemreferanse","Strekning",0],["kommune","Kommune",0],["antall","Påkjørsler",1],["per_km_per_aar","Per km per år",1]];
+  for(const v of Object.values(VEIDATA)) if(RADER.some(r=>r[v.kol[0][0]]!==undefined&&r[v.kol[0][0]]!==null)) k.push(...v.kol);
+  k.push(["verste_maaned","Flest i",0],["median_avstand_veg_m","Avstand til vei (m)",1],["arter","Arter",0]);
+  return k;
+}
+let KOL=[];
 function visStrekninger(){
   if(!RADER) return;
   $("s5").classList.remove("skjult");
@@ -1523,11 +1553,14 @@ function visStrekninger(){
   if(META&&META.antall) $("sammendrag").textContent=
     `${tallf(META.snappet)} av ${tallf(META.antall)} påkjørsler ble knyttet til en vei (${(META.snappet/META.antall*100).toFixed(1).replace(".",",")} %).`
     +(META.ustedfestet?` ${tallf(META.ustedfestet)} lå mer enn ${META.maksAvstand} m fra nærmeste vei.`:"")
-    +`\nStrekningslengde ${tallf(META.bin)} m. `+(META.antallAar?`Utvalget dekker ${META.antallAar} år.`:"");
+    +`\nStrekningslengde ${tallf(META.bin)} m. `+(META.antallAar?`Utvalget dekker ${META.antallAar} år.`:"")
+    +(META.veidata&&META.veidata.length&&META.veidataFor?`\nVeidata er hentet for de ${tallf(META.veidataFor)} strekningene med flest påkjørsler.`:"")
+    +(META.veifeil?` ${tallf(META.veifeil)} oppslag ga ikke svar.`:"");
   $("lag").value="strekninger"; streklag=null; velgLag();
   tegnTabell();
 }
 function tegnTabell(){
+  KOL=kolonner();
   const hode=$("tabell").tHead.rows[0]; hode.innerHTML="";
   for(const [felt,navn,tall] of KOL){
     const th=document.createElement("th"); if(tall) th.className="t"; th.scope="col";
@@ -1570,7 +1603,7 @@ function tilGeo(rader,felt){
   return JSON.stringify({type:"FeatureCollection",features:rader.map(r=>({type:"Feature",
     geometry:{type:"Point",coordinates:[r.lon,r.lat]},properties:Object.fromEntries(felt.map(k=>[k,r[k]??null]))}))});
 }
-const SFELT=["vegsystemreferanse","veg","vegkategori","meter_fra","meter_til","kommune","antall","per_km_per_aar","adt","per_mill_kjt_km","arter","per_aar","per_maaned","verste_maaned","aar_dekket","median_avstand_veg_m","lat","lon"];
+const SFELT=["vegsystemreferanse","veg","vegkategori","meter_fra","meter_til","kommune","antall","per_km_per_aar","adt","per_mill_kjt_km","fartsgrense","fartsgrenser","skiltet_viltfare","viltgjerde","belysning","arter","per_aar","per_maaned","verste_maaned","aar_dekket","median_avstand_veg_m","lat","lon"];
 const PFELT=["art","dato","aar","mnd","time","arsakTekst","utfall","kommune","lat","lon","ost","nord"];
 $("lastcsv").addEventListener("click",()=>lastNed("strekninger.csv",tilCsv(RADER,SFELT),"text/csv;charset=utf-8"));
 $("lastgeo").addEventListener("click",()=>lastNed("strekninger.geojson",tilGeo(RADER,SFELT),"application/geo+json"));
