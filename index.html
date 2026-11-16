@@ -1293,15 +1293,27 @@ function tomLager(){
 }
 /* Felles fartsstyring: NVDB oppgir hvor mange oppslag som gjenstår i kvoten (x-ratelimit-remaining).
    Verktøyet senker farten når kvoten nærmer seg tom, slik at NVDB ikke trenger å avvise oppslag. */
-let ventTil=0, samtidigNaa=SAMTIDIG, kvote=null;
+let ventTil=0, samtidigNaa=SAMTIDIG, kvote=null, ute=0, sistSvar=0;
+const KVOTE_MARGIN=6;
+/* Slipper bare gjennom et oppslag når kvoten rekker til alle oppslag som er underveis, pluss en margin.
+   Står alt stille, sendes ett oppslag for å lese av kvoten på nytt. */
+async function ventPaaKvote(){
+  for(;;){
+    if(avbryt) throw new Error("avbrutt");
+    const v=ventTil-Date.now(); if(v>0){ await pause(v); continue; }
+    if(kvote===null||kvote-ute>KVOTE_MARGIN) return;
+    if(ute===0&&Date.now()-sistSvar>250) return;
+    await pause(60);
+  }
+}
 async function hentTrygt(url){
   for(let i=0;i<6;i++){
     if(avbryt) throw new Error("avbrutt");
-    const v=ventTil-Date.now(); if(v>0) await pause(v);
-    if(kvote!==null&&kvote<18){ await pause(kvote<8?500:250); }
-    let r;
+    await ventPaaKvote();
+    let r; ute++;
     try{ r=await fetch(url,{headers:{"Accept":"application/json"}}); }
-    catch(e){ if(i>=3) throw new Error("nett"); await pause(500*2**i); continue; }
+    catch(e){ ute--; if(i>=3) throw new Error("nett"); await pause(500*2**i); continue; }
+    ute--; sistSvar=Date.now();
     const k=parseInt(r.headers.get("x-ratelimit-remaining"),10); kvote=isFinite(k)?k:null;
     if(r.ok) return {ok:true,data:await r.json()};
     if(r.status===404) return {ok:true,data:null};
