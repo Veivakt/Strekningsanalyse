@@ -859,8 +859,6 @@ header.topp .merke{margin-left:0}
     </fieldset>
     <label class="felt">Hent veidata for<select id="toppadt"><option value="0">ingen strekninger</option><option value="40" selected>de 40 øverste</option><option value="100">de 100 øverste</option><option value="300">de 300 øverste</option><option value="100000">alle strekninger</option></select>
       <small>Flere strekninger og flere typer veidata tar lengre tid.</small></label>
-    <label class="felt">Fart på oppslagene<select id="fart"><option value="60" selected>Jevn (anbefalt)</option><option value="0">Rask</option></select>
-      <small>Jevn fart holder seg under grensen Nasjonal vegdatabank setter. Rask sender så fort som mulig. Da blir noen oppslag avvist og sendt på nytt. Resultatet blir det samme.</small></label>
     <div class="knapper">
       <button type="button" class="knapp" id="kjor">Finn strekningene</button>
       <button type="button" class="knapp sek skjult" id="stopp">Stopp</button>
@@ -893,7 +891,7 @@ header.topp .merke{margin-left:0}
     <h2 id="t6">Metode og begrensninger</h2>
     <details><summary>Slik regner verktøyet</summary><ul>
       <li>Punkter som ligger mindre enn 20 meter fra hverandre, slås sammen før oppslaget mot veinettet.</li>
-      <li>Nasjonal vegdatabank begrenser hvor mange oppslag den tar imot. Med jevn fart sender verktøyet rundt 17 oppslag i sekundet. Med rask fart går det noe fortere, men databanken avviser da noen oppslag, som verktøyet sender på nytt.</li>
+      <li>Nasjonal vegdatabank begrenser hvor mange oppslag den tar imot. Verktøyet holder derfor jevn fart, rundt 17 oppslag i sekundet.</li>
       <li>Svarene fra veinettet lagres i nettleseren din i 60 dager. Da trenger ikke verktøyet å spørre på nytt om de samme punktene. Ingenting sendes til VeiVakt.</li>
       <li>Hvert punkt knyttes til nærmeste vei innenfor avstanden du velger. Punkter som ligger lenger unna, holdes utenfor.</li>
       <li>Strekningene følger meterverdiene i vegsystemreferansen, for eksempel «FV33 S3D1 m1500–2000».</li>
@@ -1297,7 +1295,7 @@ function tomLager(){
 /* Felles fartsstyring. NVDB har flere tjenere med hver sin teller, så tallet i x-ratelimit-remaining
    gjelder bare én av dem. Målt 16.11.2026: jevn fart på ett oppslag per 60 ms ga ingen avviste oppslag,
    45 ms ga noen få. Verktøyet holder derfor jevn fart og tar en kort pause når en teller nærmer seg null. */
-let MELLOMROM=60;
+const MELLOMROM=60;
 let ventTil=0, samtidigNaa=SAMTIDIG, kvote=null, nesteStart=0, sisteKvoter=[];
 async function ventPaaKvote(){
   for(;;){
@@ -1601,7 +1599,7 @@ function oppdater(){
   let lagret=0;
   if(bil){ const grp=grupper(UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet")), maks=+$("maksavstand").value;
     for(const g of grp) if(cache.has(posNokkel(g,maks))) lagret++;
-    const nye=grp.length-lagret, min=Math.ceil(nye*(+$("fart").value||45)/1000/60*1.15);
+    const nye=grp.length-lagret, min=Math.ceil(nye*MELLOMROM/1000/60*1.15);
     $("togmerknad").textContent+=` Det gir om lag ${tallf(grp.length)} oppslag`+(lagret?`, og ${tallf(lagret)} av dem er lagret fra før`:"")
       +(min>=2?`. De nye kan ta rundt ${tallf(min)} minutter. Velg et fylke eller en kommune for å gå raskere.`:"."); }
   $("tomlager").classList.toggle("skjult",!cache.size);
@@ -1810,7 +1808,7 @@ $("kjor").addEventListener("click",async()=>{
   if(!veipunkter.length&&!togpunkter.length) return;
   avbryt=false;
   const bin=+$("bin").value, maksAvstand=+$("maksavstand").value, toppAdt=+$("toppadt").value;
-  MELLOMROM=+$("fart").value; nesteStart=0; sisteKvoter.length=0;
+  nesteStart=0; sisteKvoter.length=0;
   const valgte=[...document.querySelectorAll("#cVeidata input:checked")].map(e=>e.value);
   const aar=new Set(veipunkter.map(p=>p.aar).filter(Boolean));
   const antallAar=FILTER.aarFra!==null&&aar.size?FILTER.aarTil-FILTER.aarFra+1:0;
@@ -1948,7 +1946,7 @@ $("lagre").addEventListener("click",()=>{
 
 /* ══ Lagrede oppslag ══ */
 $("tomlagerknapp").addEventListener("click",tomLager);
-for(const id of ["maksavstand","fart"]) $(id).addEventListener("change",()=>{ if(ALLE&&ALLE.length) oppdater(); });
+$("maksavstand").addEventListener("change",()=>{ if(ALLE&&ALLE.length) oppdater(); });
 aapneLager().then(()=>{ if(typeof ALLE!=="undefined"&&ALLE&&ALLE.length) oppdater(); });
 </script>
 </body>
