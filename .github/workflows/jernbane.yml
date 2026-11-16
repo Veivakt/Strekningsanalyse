@@ -30,4 +30,5 @@ jobs:
           git add jernbane.json
           if git diff --cached --quiet; then echo "Ingen endringer"; exit 0; fi
           git commit -m "Oppdater jernbanenett fra Bane NOR"
+          git pull --rebase origin main
           git push
