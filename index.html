@@ -770,6 +770,13 @@ header.topp .merke{margin-left:0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
 .lenke{background:none;border:0;padding:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
+
+.faner{display:flex;gap:4px;margin:10px 0 12px;border-bottom:2px solid #D4DCE5}
+.faner button{flex:1;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:9px 6px;font:inherit;font-weight:600;color:#46617F;cursor:pointer}
+.faner button[aria-selected="true"]{color:#16324F;border-bottom-color:#F2860D}
+.faner button:focus-visible{outline:2px solid #16324F;outline-offset:2px}
+.to{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input[type=date]{width:100%;font:inherit;padding:8px;border:1px solid #6B8199;border-radius:4px;background:#fff;color:inherit}
 </style>
 </head>
 <body>
@@ -783,7 +790,25 @@ header.topp .merke{margin-left:0}
 
   <section class="kort" aria-labelledby="t1">
     <h2 id="t1"><span class="nr">1</span>Hent inn data</h2>
-    <p>Verktøyet bruker fallviltdata som du selv laster ned fra Hjorteviltregisteret. Fila blir på din maskin og sendes ikke til oss.</p>
+    <div class="faner" role="tablist" aria-label="Hvor dataene kommer fra">
+      <button type="button" role="tab" id="faneHent" aria-selected="true" aria-controls="panHent">Hent fra registeret</button>
+      <button type="button" role="tab" id="faneFil" aria-selected="false" aria-controls="panFil" tabindex="-1">Last opp fil</button>
+    </div>
+    <div id="panHent" role="tabpanel" aria-labelledby="faneHent">
+      <p>Verktøyet henter fallviltdata direkte fra Hjorteviltregisteret til din nettleser. Ingenting sendes til oss.</p>
+      <label class="felt">Periode<select id="periode"><option value="1" selected>Siste 12 måneder</option><option value="3">Siste 3 år</option><option value="5">Siste 5 år</option><option value="10">Siste 10 år</option><option value="egen">Velg datoer selv</option></select></label>
+      <div class="to skjult" id="egneDatoer">
+        <label class="felt">Fra dato<input type="date" id="fraDato"></label>
+        <label class="felt">Til dato<input type="date" id="tilDato"></label>
+      </div>
+      <div class="knapper">
+        <button type="button" class="knapp" id="hent">Hent data</button>
+        <button type="button" class="knapp sek skjult" id="hentStopp">Stopp</button>
+      </div>
+      <p class="hint">Du kan hente inntil 10 år om gangen. Lengre perioder tar lengre tid.</p>
+    </div>
+    <div id="panFil" role="tabpanel" aria-labelledby="faneFil" class="skjult">
+    <p>Du kan også bruke en fil du selv har lastet ned fra Hjorteviltregisteret. Fila blir på din maskin og sendes ikke til oss.</p>
     <ol class="slik">
       <li>Åpne <a href="https://www.hjorteviltregisteret.no/FallviltInnsyn" target="_blank" rel="noopener">Fallvilt innsyn i Hjorteviltregisteret</a>.</li>
       <li>Velg område, periode og arter. Ta gjerne med alle årsaker og utfall, for de kan velges bort her.</li>
@@ -794,6 +819,7 @@ header.topp .merke{margin-left:0}
       <span class="hint" id="sliphint">Excel (.xlsx), CSV eller et lagret prosjekt (.json)</span>
     </div>
     <input type="file" id="fil" class="skjult" accept=".csv,.txt,.xlsx,.json,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+    </div>
     <div id="filkvitt" class="kvitt skjult" role="status"></div>
   </section>
 
@@ -821,6 +847,7 @@ header.topp .merke{margin-left:0}
     <details id="flereValg" style="margin-top:12px"><summary>Kjønn og alder</summary>
       <fieldset><legend>Kjønn</legend><div class="chips" id="cKjonn"></div></fieldset>
       <fieldset><legend>Alder</legend><div class="chips" id="cAlder"></div></fieldset>
+      <fieldset><legend>Type kjøretøy</legend><div class="chips" id="cKjoretoy"></div></fieldset>
     </details>
     <p style="margin-top:12px"><button type="button" class="lenkeknapp" id="nullstill">Nullstill utvalget</button></p>
   </section>
@@ -912,6 +939,7 @@ header.topp .merke{margin-left:0}
     </ul></details>
     <details><summary>Kilder</summary><ul>
       <li>Fallvilt: Hjorteviltregisteret, Miljødirektoratet.</li>
+      <li>Fallviltdata: Hjorteviltregisteret, Miljødirektoratet. Hentes fra registerets åpne tjeneste når du trykker «Hent data».</li>
       <li>Veinett og trafikkmengde: Nasjonal vegdatabank, Statens vegvesen (NLOD).</li>
       <li>Jernbanenett: Jernbane – Banenettverk, Bane NOR SF, via Geonorge (NLOD).</li>
       <li>Bakgrunnskart: © Kartverket.</li>
@@ -1068,7 +1096,7 @@ const HINT={
   arsak:["årsak","arsak","bakgrunn","dødsårsak","dodsarsak","hendelse"],
   utfall:["utfall","resultat"],
   kommune:["kommune","kommunenavn"],
-  kjonn:["kjønn","kjonn"], alder:["alder","alderskategori"],
+  kjonn:["kjønn","kjonn"], alder:["alder","alderskategori"], kjoretoy:["typemotorkjøretøy","kjøretøy","kjoretoy"],
   sted:["stedfesting","stedsnavn","sted"], id:["fallviltid","fallviltnr","id"]
 };
 const BARE_EKSAKT=new Set(["tid","id"]);
@@ -1131,7 +1159,7 @@ function lesPunkter(rader,kart,excel){
     punkter.push({ost:+ost.toFixed(2), nord:+nord.toFixed(2), lat:+lat.toFixed(6), lon:+lon.toFixed(6),
       art:art||"Ukjent", aar:d.aar, mnd:d.mnd, time:d.time, dato:d.tekst,
       kommune:kom?kom[2]:kt, knr:kom?kom[1]:"", arsak, arsakTekst:aa, utfall:celle(r,kart.utfall),
-      kjonn:celle(r,kart.kjonn), alder:celle(r,kart.alder), sted:celle(r,kart.sted), id:celle(r,kart.id)});
+      kjonn:celle(r,kart.kjonn), alder:celle(r,kart.alder), kjoretoy:celle(r,kart.kjoretoy)||"", sted:celle(r,kart.sted), id:celle(r,kart.id)});
   }
   return {punkter, forkastet};
 }
@@ -1261,8 +1289,8 @@ function aapneLager(){
   if(lagerKlar) return lagerKlar;
   lagerKlar=new Promise(ferdig=>{
     try{
-      const f=indexedDB.open("veivakt-viltkart",1);
-      f.onupgradeneeded=()=>f.result.createObjectStore("posisjon");
+      const f=indexedDB.open("veivakt-viltkart",2);
+      f.onupgradeneeded=()=>{ for(const n of ["posisjon","fallvilt"]) if(!f.result.objectStoreNames.contains(n)) f.result.createObjectStore(n); };
       f.onerror=()=>ferdig(0);
       f.onsuccess=()=>{
         lagerDb=f.result;
@@ -1517,7 +1545,7 @@ function nyttFilter(){
   const arsaker=sett(p=>p.arsak), aar=ALLE.map(p=>p.aar).filter(Boolean);
   const valgt=new Set(["bil","tog","ukjent"].filter(a=>arsaker.has(a)));
   if(!valgt.size) for(const a of arsaker) valgt.add(a);
-  return {arsak:valgt, art:sett(p=>p.art), utfall:sett(p=>p.utfall), kjonn:sett(p=>p.kjonn), alder:sett(p=>p.alder), fylke:"", kommune:"",
+  return {arsak:valgt, art:sett(p=>p.art), utfall:sett(p=>p.utfall), kjonn:sett(p=>p.kjonn), alder:sett(p=>p.alder), kjoretoy:sett(p=>p.kjoretoy), fylke:"", kommune:"",
     aarFra:aar.length?Math.min(...aar):null, aarTil:aar.length?Math.max(...aar):null,
     mnd:new Set([1,2,3,4,5,6,7,8,9,10,11,12])};
 }
@@ -1528,6 +1556,7 @@ function passer(p,uten){
   if(uten!=="utfall"&&!f.utfall.has(p.utfall)) return false;
   if(uten!=="kjonn"&&!f.kjonn.has(p.kjonn)) return false;
   if(uten!=="alder"&&!f.alder.has(p.alder)) return false;
+  if(uten!=="kjoretoy"&&f.kjoretoy&&!f.kjoretoy.has(p.kjoretoy)) return false;
   if(uten!=="omraade"){ if(f.kommune){ if((p.knr||p.kommune)!==f.kommune) return false; } else if(f.fylke&&p.knr.slice(0,2)!==f.fylke) return false; }
   if(uten!=="aar"&&f.aarFra!==null&&p.aar&&(p.aar<f.aarFra||p.aar>f.aarTil)) return false;
   if(uten!=="mnd"&&f.mnd.size<12&&!(p.mnd&&f.mnd.has(p.mnd))) return false;
@@ -1559,7 +1588,7 @@ function byggFilter(){
   chips($("cUtfall"),utf,FILTER.utfall,v=>v||"Ikke oppgitt",null,oppdater);
   $("fUtfall").classList.toggle("skjult",utf.length<2);
   let flere=false;
-  for(const [felt,boks] of [["kjonn","cKjonn"],["alder","cAlder"]]){
+  for(const [felt,boks] of [["kjonn","cKjonn"],["alder","cAlder"],["kjoretoy","cKjoretoy"]]){
     const v=sorterte(tell(ALLE.filter(p=>passer(p,felt)),p=>p[felt]));
     for(const a of new Set(ALLE.map(p=>p[felt]))) if(!v.some(x=>x[0]===a)) v.push([a,0]);
     chips($(boks),v,FILTER[felt],x=>x||"Ikke oppgitt",null,oppdater);
@@ -1659,6 +1688,7 @@ function punktPopup(p){
        <tr><td>Årsak</td><td>${esc(p.arsakTekst||ARSAKNAVN[p.arsak])}</td></tr>
        ${p.utfall?`<tr><td>Utfall</td><td>${esc(p.utfall)}</td></tr>`:""}
        ${p.kjonn||p.alder?`<tr><td>Kjønn og alder</td><td>${esc([p.kjonn,p.alder].filter(Boolean).join(", "))}</td></tr>`:""}
+       ${p.kjoretoy?`<tr><td>Kjøretøy</td><td>${esc(p.kjoretoy)}</td></tr>`:""}
        <tr><td>Sted</td><td>${esc([p.sted,p.kommune].filter(Boolean).join(", ")||"–")}</td></tr>
        ${p.id?`<tr><td>Fallvilt-ID</td><td>${esc(p.id)}</td></tr>`:""}
        <tr><td>Koordinat</td><td>${p.lat}, ${p.lon}</td></tr></table></div>`;
@@ -1744,6 +1774,91 @@ function visData(zoom){
   setTimeout(()=>{ kart.invalidateSize(); oppdater(); $("utdatert").classList.add("skjult"); tegnPunkter(zoom);
     if(RADER){ $("lag").options[1].disabled=false; visStrekninger(); } },50);
 }
+/* ══ Hent fra Hjorteviltregisteret ══ */
+const HVR="https://www.hjorteviltregisteret.no/api/v0/fallvilt", HVR_SIDE=1000, HVR_MAKS_AAR=10;
+const HVR_HODER=["Dato","Kommune","Art","Kjønn","Alder","Årsak","Utfall","Type motorkjøretøy","Fallvilt-ID","Breddegrad","Lengdegrad"];
+const avkamel=s=>{ s=String(s||"").replace("Ikkefunnet","IkkeFunnet").replace(/([a-zæøå])([A-ZÆØÅ])/g,"$1 $2"); return s?s.charAt(0)+s.slice(1).toLowerCase():""; };
+const isoDag=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const noDato=iso=>iso?iso.slice(8,10)+"."+iso.slice(5,7)+"."+iso.slice(0,4):"";
+function hvrRad(x){
+  const t=String(x.HendelsesDatoTid||""), dato=noDato(t)+(x.UkjentTidspunkt||t.length<16?"":" "+t.slice(11,16));
+  return [dato, [x.KommuneNummer,x.KommuneNavn].filter(Boolean).join(" "), avkamel(x.Art), avkamel(x.Kjonn), avkamel(x.Alder),
+    avkamel(x.Arsak), avkamel(x.Utfall), avkamel(x["TypeMotorkjøretøy"]), x.FallviltId??"", x.Latitude??"", x.Longitude??""];
+}
+function lagerLes(navn,nokkel){
+  return new Promise(f=>{ try{ const q=lagerDb.transaction(navn).objectStore(navn).get(nokkel); q.onsuccess=()=>f(q.result||null); q.onerror=()=>f(null); }catch(e){ f(null); } });
+}
+function lagerSkriv(navn,nokkel,verdi){
+  try{ const st=lagerDb.transaction(navn,"readwrite").objectStore(navn); st.clear(); st.put(verdi,nokkel); }catch(e){}
+}
+let hentAvbryt=false;
+function hentPeriode(){
+  const v=$("periode").value, idag=new Date();
+  if(v!=="egen"){ const fra=new Date(idag); fra.setFullYear(fra.getFullYear()-(+v)); return {fra:isoDag(fra),til:isoDag(idag)}; }
+  const fra=$("fraDato").value, til=$("tilDato").value||isoDag(idag);
+  if(!fra) throw new Error("Velg en fra-dato.");
+  if(fra>til) throw new Error("Fra-datoen må være før til-datoen.");
+  if((new Date(til)-new Date(fra))/864e5>HVR_MAKS_AAR*366) throw new Error(`Du kan hente inntil ${HVR_MAKS_AAR} år om gangen. Velg en kortere periode.`);
+  return {fra,til};
+}
+async function hentFraRegisteret(){
+  const kv=$("filkvitt"); kv.className="kvitt";
+  let per;
+  try{ per=hentPeriode(); }catch(e){ kv.className="kvitt feil"; kv.textContent=e.message; return; }
+  hentAvbryt=false; $("hent").disabled=true; $("hentStopp").classList.remove("skjult");
+  const tekstPer=`${noDato(per.fra)}–${noDato(per.til)}`, nokkel=per.fra+"|"+per.til, idag=isoDag(new Date());
+  try{
+    await aapneLager();
+    let rader=null, hentet=null;
+    const lagret=lagerDb?await lagerLes("fallvilt",nokkel):null;
+    if(lagret&&lagret.dag===idag&&Array.isArray(lagret.rader)){ rader=lagret.rader; hentet=lagret.hentet; }
+    if(!rader){
+      rader=[]; let side=1, ferdig=false;
+      kv.textContent=`Henter fallviltdata for ${tekstPer} fra Hjorteviltregisteret …`;
+      while(!ferdig){
+        if(hentAvbryt) throw new Error("avbrutt");
+        const sider=[side,side+1,side+2]; side+=3;
+        const svar=await Promise.all(sider.map(async s=>{
+          for(let i=0;;i++){
+            let r; try{ r=await fetch(`${HVR}?pageSize=${HVR_SIDE}&page=${s}&fraDato=${per.fra}&tilDato=${per.til}`,{headers:{"Accept":"application/json"}}); }catch(e){ r=null; }
+            if(r&&r.ok){ const d=await r.json(); if(Array.isArray(d)) return d; }
+            if(i>=2||hentAvbryt) throw new Error("register");
+            await pause(1500*(i+1));
+          }
+        }));
+        for(const d of svar){ for(const x of d) rader.push(hvrRad(x)); if(d.length<HVR_SIDE) ferdig=true; }
+        kv.textContent=`Henter fallviltdata for ${tekstPer} fra Hjorteviltregisteret …\n${tallf(rader.length)} registreringer hentet.`;
+      }
+      const na=new Date(); hentet=`${noDato(isoDag(na))} kl. ${String(na.getHours()).padStart(2,"0")}.${String(na.getMinutes()).padStart(2,"0")}`;
+      if(lagerDb) lagerSkriv("fallvilt",nokkel,{dag:idag,hentet,rader});
+    }
+    if(!rader.length){ kv.className="kvitt feil"; kv.textContent=`Registeret har ingen registreringer for ${tekstPer}.`; return; }
+    const {punkter,forkastet}=lesPunkter(rader,finnKolonner(HVR_HODER),false);
+    if(!punkter.length){ kv.className="kvitt feil"; kv.textContent="Fant ingen registreringer av hjortevilt med gyldig koordinat i perioden."; return; }
+    const kilde=`Hjorteviltregisteret (Miljødirektoratet), ${tekstPer}, hentet ${hentet}`;
+    ALLE=punkter; FILTER=nyttFilter(); RADER=null; streklag=null; META={fil:"Hjorteviltregisteret "+tekstPer,kilde};
+    $("s5").classList.add("skjult"); $("lag").value="punkter"; $("lag").options[1].disabled=true;
+    const fk=Object.entries(forkastet).map(([k,v])=>`${tallf(v)} ${k}`).join(", ");
+    kv.textContent=`Hentet ${tallf(rader.length)} registreringer for ${tekstPer}. ${tallf(punkter.length)} er hjortevilt med gyldig koordinat.`
+      +(fk?`\nHoldt utenfor: ${fk}.`:"")+`\nKilde: Hjorteviltregisteret (Miljødirektoratet). Hentet ${hentet}.`;
+    visData(true); visKilde();
+    $("s2").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){
+    kv.className="kvitt feil";
+    kv.textContent=e.message==="avbrutt"?"Hentingen ble stoppet.":"Får ikke hentet data fra Hjorteviltregisteret akkurat nå. Prøv igjen senere, eller bruk fanen «Last opp fil».";
+  }finally{ $("hent").disabled=false; $("hentStopp").classList.add("skjult"); }
+}
+let kildeTekst=null;
+function visKilde(){
+  if(!kart) return;
+  if(kildeTekst){ kart.attributionControl.removeAttribution(kildeTekst); kildeTekst=null; }
+  if(META&&META.kilde){ kildeTekst="Data: "+esc(META.kilde); kart.attributionControl.addAttribution(kildeTekst); }
+}
+function velgFane(hent){
+  $("faneHent").setAttribute("aria-selected",hent); $("faneFil").setAttribute("aria-selected",!hent);
+  $("faneHent").tabIndex=hent?0:-1; $("faneFil").tabIndex=hent?-1:0;
+  $("panHent").classList.toggle("skjult",!hent); $("panFil").classList.toggle("skjult",hent);
+}
 async function lesFil(f){
   const kv=$("filkvitt"); kv.className="kvitt"; kv.textContent="Leser fila …";
   try{
@@ -1752,10 +1867,10 @@ async function lesFil(f){
       const d=JSON.parse(await f.text());
       if(!d||d.format!=="veivakt-viltkart"||!Array.isArray(d.punkter)) throw new Error("Dette er ikke et lagret prosjekt fra verktøyet.");
       ALLE=d.punkter; FILTER=nyttFilter();
-      if(d.filter){ for(const k of ["arsak","art","utfall","mnd","kjonn","alder"]) if(d.filter[k]) FILTER[k]=new Set(d.filter[k]);
+      if(d.filter){ for(const k of ["arsak","art","utfall","mnd","kjonn","alder","kjoretoy"]) if(d.filter[k]) FILTER[k]=new Set(d.filter[k]);
         FILTER.fylke=d.filter.fylke||""; FILTER.kommune=d.filter.kommune||"";
         FILTER.aarFra=d.filter.aarFra??FILTER.aarFra; FILTER.aarTil=d.filter.aarTil??FILTER.aarTil; }
-      RADER=d.rader||null; META=d.meta||{}; streklag=null;
+      RADER=d.rader||null; META=d.meta||{}; streklag=null; setTimeout(visKilde,200);
       kv.textContent=`Åpnet prosjektet «${f.name}» med ${tallf(ALLE.length)} registreringer`+(RADER?` og ${tallf(RADER.length)} strekninger.`:".");
       visData(true); return;
     }
@@ -1769,7 +1884,7 @@ async function lesFil(f){
     }
     const {punkter,forkastet}=lesPunkter(data.rader,kol,!!data.excel);
     if(!punkter.length){ kv.className="kvitt feil"; kv.textContent="Fant ingen registreringer med gyldig koordinat i fila."; return; }
-    ALLE=punkter; FILTER=nyttFilter(); RADER=null; streklag=null; META={fil:f.name};
+    ALLE=punkter; FILTER=nyttFilter(); RADER=null; streklag=null; META={fil:f.name}; setTimeout(visKilde,200);
     $("s5").classList.add("skjult"); $("lag").value="punkter"; $("lag").options[1].disabled=true;
     const fk=Object.entries(forkastet).map(([k,v])=>`${tallf(v)} ${k}`).join(", ");
     const mangler=[]; if(kol.arsak===null) mangler.push("årsak"); if(kol.dato===null) mangler.push("dato"); if(kol.art===null) mangler.push("art");
@@ -1922,17 +2037,17 @@ function lastNed(navn,innhold,type){
 const csvCelle=v=>{ const s=v==null?"":String(v); return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
 function tilCsv(rader,felt){ return "﻿"+[felt.join(";"),...rader.map(r=>felt.map(k=>csvCelle(r[k])).join(";"))].join("\n"); }
 function tilGeo(rader,felt){
-  return JSON.stringify({type:"FeatureCollection",features:rader.map(r=>({type:"Feature",
+  return JSON.stringify({type:"FeatureCollection",kilde:(META&&META.kilde)||undefined,features:rader.map(r=>({type:"Feature",
     geometry:{type:"Point",coordinates:[r.lon,r.lat]},properties:Object.fromEntries(felt.map(k=>[k,r[k]??null]))}))});
 }
 const SFELT=["vegsystemreferanse","veg","vegkategori","meter_fra","meter_til","kommune","antall","per_km_per_aar","adt","per_mill_kjt_km","fartsgrense","fartsgrenser","skiltet_viltfare","viltgjerde","belysning","arter","per_aar","per_maaned","verste_maaned","aar_dekket","median_avstand_veg_m","lat","lon"];
-const PFELT=["id","art","kjonn","alder","dato","aar","mnd","time","arsakTekst","utfall","knr","kommune","sted","lat","lon","ost","nord"];
+const PFELT=["id","art","kjonn","alder","kjoretoy","dato","aar","mnd","time","arsakTekst","utfall","knr","kommune","sted","lat","lon","ost","nord"];
 $("lastcsv").addEventListener("click",()=>lastNed("strekninger.csv",tilCsv(RADER,SFELT),"text/csv;charset=utf-8"));
 $("lastgeo").addEventListener("click",()=>lastNed("strekninger.geojson",tilGeo(RADER,SFELT),"application/geo+json"));
 $("punktCsv").addEventListener("click",()=>lastNed("paakjorsler-utvalg.csv",tilCsv(UTVALG,PFELT),"text/csv;charset=utf-8"));
 $("punktGeo").addEventListener("click",()=>lastNed("paakjorsler-utvalg.geojson",tilGeo(UTVALG,PFELT),"application/geo+json"));
 $("lagre").addEventListener("click",()=>{
-  const f={arsak:[...FILTER.arsak],art:[...FILTER.art],utfall:[...FILTER.utfall],mnd:[...FILTER.mnd],kjonn:[...FILTER.kjonn],alder:[...FILTER.alder],fylke:FILTER.fylke,kommune:FILTER.kommune,aarFra:FILTER.aarFra,aarTil:FILTER.aarTil};
+  const f={arsak:[...FILTER.arsak],art:[...FILTER.art],utfall:[...FILTER.utfall],mnd:[...FILTER.mnd],kjonn:[...FILTER.kjonn],alder:[...FILTER.alder],kjoretoy:[...(FILTER.kjoretoy||[])],fylke:FILTER.fylke,kommune:FILTER.kommune,aarFra:FILTER.aarFra,aarTil:FILTER.aarTil};
   const rader=RADER?RADER.map(r=>{ const k=Object.assign({},r); delete k._m; return k; }):null;
   lastNed("viltkart-prosjekt.json",JSON.stringify({format:"veivakt-viltkart",versjon:2,lagret:new Date().toISOString(),punkter:ALLE,filter:f,rader,meta:META}),"application/json");
 });
@@ -1948,6 +2063,16 @@ $("lagre").addEventListener("click",()=>{
 $("tomlagerknapp").addEventListener("click",tomLager);
 $("maksavstand").addEventListener("change",()=>{ if(ALLE&&ALLE.length) oppdater(); });
 aapneLager().then(()=>{ if(typeof ALLE!=="undefined"&&ALLE&&ALLE.length) oppdater(); });
+
+/* ══ Henting fra registeret: knapper og faner ══ */
+$("hent").addEventListener("click",hentFraRegisteret);
+$("hentStopp").addEventListener("click",()=>{ hentAvbryt=true; });
+$("periode").addEventListener("change",e=>$("egneDatoer").classList.toggle("skjult",e.target.value!=="egen"));
+$("faneHent").addEventListener("click",()=>velgFane(true));
+$("faneFil").addEventListener("click",()=>velgFane(false));
+for(const id of ["faneHent","faneFil"]) $(id).addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"||e.key==="ArrowLeft"){ const hent=id!=="faneHent"; velgFane(hent); $(hent?"faneHent":"faneFil").focus(); } });
+(()=>{ const d=new Date(), min=new Date(d); min.setFullYear(min.getFullYear()-30); for(const id of ["fraDato","tilDato"]){ $(id).max=isoDag(d); $(id).min=isoDag(min); } $("tilDato").value=isoDag(d); })();
 </script>
 </body>
 </html>
