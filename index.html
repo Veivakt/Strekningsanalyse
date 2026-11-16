@@ -1291,36 +1291,35 @@ function tomLager(){
   try{ if(lagerDb) lagerDb.transaction("posisjon","readwrite").objectStore("posisjon").clear(); }catch(e){}
   if(ALLE&&ALLE.length) oppdater(); else $("tomlager").classList.add("skjult");
 }
-/* Felles fartsstyring: NVDB oppgir hvor mange oppslag som gjenstår i kvoten (x-ratelimit-remaining).
-   Verktøyet senker farten når kvoten nærmer seg tom, slik at NVDB ikke trenger å avvise oppslag. */
-let ventTil=0, samtidigNaa=SAMTIDIG, kvote=null, ute=0, sistSvar=0;
-const KVOTE_MARGIN=6;
-/* Slipper bare gjennom et oppslag når kvoten rekker til alle oppslag som er underveis, pluss en margin.
-   Står alt stille, sendes ett oppslag for å lese av kvoten på nytt. */
+/* Felles fartsstyring. NVDB har flere tjenere med hver sin teller, så tallet i x-ratelimit-remaining
+   gjelder bare én av dem. Målt 16.11.2026: jevn fart på ett oppslag per 60 ms ga ingen avviste oppslag,
+   45 ms ga noen få. Verktøyet holder derfor jevn fart og tar en kort pause når en teller nærmer seg null. */
+const MELLOMROM=60;
+let ventTil=0, samtidigNaa=SAMTIDIG, kvote=null, nesteStart=0, sisteKvoter=[];
 async function ventPaaKvote(){
   for(;;){
     if(avbryt) throw new Error("avbrutt");
     const v=ventTil-Date.now(); if(v>0){ await pause(v); continue; }
-    if(kvote===null||kvote-ute>KVOTE_MARGIN) return;
-    if(ute===0&&Date.now()-sistSvar>250) return;
-    await pause(60);
+    if(sisteKvoter.length&&Math.min(...sisteKvoter)<=3){ ventTil=Date.now()+400; sisteKvoter.length=0; continue; }
+    const na=Date.now(), start=Math.max(na,nesteStart); nesteStart=start+MELLOMROM;
+    if(start>na) await pause(start-na);
+    return;
   }
 }
 async function hentTrygt(url){
   for(let i=0;i<6;i++){
     if(avbryt) throw new Error("avbrutt");
     await ventPaaKvote();
-    let r; ute++;
+    let r;
     try{ r=await fetch(url,{headers:{"Accept":"application/json"}}); }
-    catch(e){ ute--; if(i>=3) throw new Error("nett"); await pause(500*2**i); continue; }
-    ute--; sistSvar=Date.now();
+    catch(e){ if(i>=3) throw new Error("nett"); await pause(500*2**i); continue; }
     const k=parseInt(r.headers.get("x-ratelimit-remaining"),10); kvote=isFinite(k)?k:null;
+    if(kvote!==null){ sisteKvoter.push(kvote); if(sisteKvoter.length>6) sisteKvoter.shift(); }
     if(r.ok) return {ok:true,data:await r.json()};
     if(r.status===404) return {ok:true,data:null};
     if([429,502,503,504].includes(r.status)){
       const ra=parseFloat(r.headers.get("Retry-After"));
       ventTil=Math.max(ventTil,Date.now()+(isFinite(ra)?Math.min(ra,30)*1000:(r.status===429?500:800)*2**Math.min(i,3)));
-      if(r.status===429) samtidigNaa=Math.max(4,samtidigNaa-1);
       continue;
     }
     return {ok:false,data:null};
@@ -1599,7 +1598,7 @@ function oppdater(){
   let lagret=0;
   if(bil){ const grp=grupper(UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet")), maks=+$("maksavstand").value;
     for(const g of grp) if(cache.has(posNokkel(g,maks))) lagret++;
-    const nye=grp.length-lagret, min=Math.ceil(nye/15/60);
+    const nye=grp.length-lagret, min=Math.ceil(nye*MELLOMROM/1000/60*1.15);
     $("togmerknad").textContent+=` Det gir om lag ${tallf(grp.length)} oppslag`+(lagret?`, og ${tallf(lagret)} av dem er lagret fra før`:"")
       +(min>=2?`. De nye kan ta rundt ${tallf(min)} minutter. Velg et fylke eller en kommune for å gå raskere.`:"."); }
   $("tomlager").classList.toggle("skjult",!cache.size);
