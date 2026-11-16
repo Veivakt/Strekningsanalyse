@@ -1260,8 +1260,8 @@ function lesBanelenker(tekst){
     if(pos.length<4) continue;
     let k=[]; for(let i=0;i+1<pos.length;i+=2) k.push(pos[i],pos[i+1]);
     if(k[0]>3e6) k=k.map((v,i)=>i%2?k[i-1]:k[i+1]);
-    const navn=Object.entries(felt).find(([a])=>/navn/i.test(a)), st=Object.entries(felt).find(([a])=>/status$/i.test(a));
-    if(st&&/^p$/i.test(st[1])) continue;
+    const navn=felt.banenavn!==undefined?["banenavn",felt.banenavn]:Object.entries(felt).find(([a])=>/navn$/i.test(a)&&a!=="banekortnavn"), st=Object.entries(felt).find(([a])=>/status$/i.test(a));
+    if(st&&!/^[im]$/i.test(st[1])) continue;
     const f=parseFloat(felt.startposisjon), t=parseFloat(felt.sluttposisjon);
     ut.push({n:navn?navn[1]:"", f:isFinite(f)?f:null, t:isFinite(t)?t:null, s:st?st[1]:"", k});
   }
@@ -1285,7 +1285,7 @@ async function hentJernbane(punkter){
   if(JERNBANE&&JERNBANE.full) return JERNBANE;
   try{
     const r=await fetch(JB_FIL,{cache:"no-cache"});
-    if(r.ok){ const d=await r.json(); if(d.lenker&&d.lenker.length){ JERNBANE=byggJernbane(d.lenker,"fil",d.hentet); JERNBANE.full=true; return JERNBANE; } }
+    if(r.ok){ const d=await r.json(); if(d.lenker&&d.lenker.length){ JERNBANE=byggJernbane(d.lenker.filter(l=>!l.s||/^[im]$/i.test(l.s)),"fil",d.hentet); JERNBANE.full=true; return JERNBANE; } }
   }catch(e){}
   const m=1000, xs=punkter.map(p=>p.ost), ys=punkter.map(p=>p.nord);
   const bb=[Math.min(...xs)-m,Math.min(...ys)-m,Math.max(...xs)+m,Math.max(...ys)+m].map(Math.round);

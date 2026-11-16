@@ -62,10 +62,10 @@ def main(ut):
         p = [(pos[i], pos[i + 1]) for i in range(0, len(pos) - 1, 2)]
         if p[0][0] > 3_000_000:  # nord først: bytt om
             p = [(y, x) for x, y in p]
-        navn = next((v for k, v in felt.items() if "navn" in k.lower()), "")
+        navn = felt.get("banenavn") or next((v for k, v in felt.items() if k.lower().endswith("navn") and k != "banekortnavn"), "")
         status = next((v for k, v in felt.items() if k.lower().endswith("status")), "")
         statuser[status] = statuser.get(status, 0) + 1
-        if status.upper() == "P":  # planlagt bane, ikke i drift
+        if status.upper() not in ("I", "M"):  # bare baner i drift og museumsbaner
             continue
         try:
             fra, til = float(felt.get("startposisjon", "nan")), float(felt.get("sluttposisjon", "nan"))
