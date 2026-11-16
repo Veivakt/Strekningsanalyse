@@ -797,6 +797,12 @@ header.topp .merke{margin-left:0}
   <section class="kort skjult" id="s2" aria-labelledby="t2">
     <h2 id="t2"><span class="nr">2</span>Velg ut <small id="utvalgtall"></small></h2>
     <p class="hint">Kartet og tallene følger valgene dine.</p>
+    <fieldset id="fOmraade"><legend>Område</legend>
+      <div class="rad2">
+        <label class="felt" style="margin-top:0" id="fylkefelt">Fylke<select id="fylke"></select></label>
+        <label class="felt" style="margin-top:0">Kommune<select id="kommune"></select></label>
+      </div>
+    </fieldset>
     <fieldset id="fArsak"><legend>Årsak</legend><div class="chips" id="cArsak"></div></fieldset>
     <fieldset id="fArt"><legend>Art</legend><div class="chips" id="cArt"></div></fieldset>
     <fieldset id="fUtfall"><legend>Utfall</legend><div class="chips" id="cUtfall"></div></fieldset>
@@ -809,6 +815,10 @@ header.topp .merke{margin-left:0}
     <fieldset id="fMnd"><legend>Måneder</legend><div class="chips mnd" id="cMnd"></div>
       <p style="margin-top:6px"><button type="button" class="lenkeknapp" id="mndAlle">Velg alle</button> · <button type="button" class="lenkeknapp" id="mndIngen">Fjern alle</button></p>
     </fieldset>
+    <details id="flereValg" style="margin-top:12px"><summary>Kjønn og alder</summary>
+      <fieldset><legend>Kjønn</legend><div class="chips" id="cKjonn"></div></fieldset>
+      <fieldset><legend>Alder</legend><div class="chips" id="cAlder"></div></fieldset>
+    </details>
     <p style="margin-top:12px"><button type="button" class="lenkeknapp" id="nullstill">Nullstill utvalget</button></p>
   </section>
 
@@ -1048,15 +1058,19 @@ const HINT={
   art:["art","dyreart","species"],
   arsak:["årsak","arsak","bakgrunn","dødsårsak","dodsarsak","hendelse"],
   utfall:["utfall","resultat"],
-  kommune:["kommune","kommunenavn"]
+  kommune:["kommune","kommunenavn"],
+  kjonn:["kjønn","kjonn"], alder:["alder","alderskategori"],
+  sted:["stedfesting","stedsnavn","sted"], id:["fallviltid","fallviltnr","id"]
 };
+const BARE_EKSAKT=new Set(["tid","id"]);
+const FYLKER={"03":"Oslo","11":"Rogaland","15":"Møre og Romsdal","18":"Nordland","31":"Østfold","32":"Akershus","33":"Buskerud","34":"Innlandet","39":"Vestfold","40":"Telemark","42":"Agder","46":"Vestland","50":"Trøndelag","55":"Troms","56":"Finnmark"};
 const norm=s=>String(s).toLowerCase().replace(/[^a-zæøå0-9]/g,"");
 function finnKolonner(hoder){
   const kart={}, n=hoder.map(norm), brukt=new Set();
   for(const [felt,hint] of Object.entries(HINT)){
     let idx=-1;
     for(const h of hint){ idx=n.findIndex((x,i)=>x===norm(h)&&!brukt.has(i)); if(idx>=0) break; }
-    if(idx<0) for(const h of hint){ const hn=norm(h);
+    if(idx<0&&!BARE_EKSAKT.has(felt)) for(const h of hint){ const hn=norm(h);
       idx=n.findIndex((x,i)=>hn&&x.includes(hn)&&!brukt.has(i)); if(idx>=0) break; }
     kart[felt]=idx>=0?idx:null; if(idx>=0) brukt.add(idx);
   }
@@ -1099,11 +1113,12 @@ function lesPunkter(rader,kart,excel){
       if(excel&&/^0?\.\d+$/.test(ts)) d.time=Math.floor(+ts*24);
       else if((m=ts.match(/^(\d{1,2})[:.]\d{2}/))&&+m[1]<24) d.time=+m[1];
     }
-    const aa=celle(r,kart.arsak);
+    const aa=celle(r,kart.arsak), kt=celle(r,kart.kommune), kom=kt.match(/^(\d{4})\s+(.+)$/);
     const arsak=kart.arsak===null?"ukjent":RE_BIL.test(aa)?"bil":RE_TOG.test(aa)?"tog":"annet";
     punkter.push({ost:+ost.toFixed(2), nord:+nord.toFixed(2), lat:+lat.toFixed(6), lon:+lon.toFixed(6),
       art:stor(celle(r,kart.art))||"Ukjent", aar:d.aar, mnd:d.mnd, time:d.time, dato:d.tekst,
-      kommune:celle(r,kart.kommune), arsak, arsakTekst:aa, utfall:celle(r,kart.utfall)});
+      kommune:kom?kom[2]:kt, knr:kom?kom[1]:"", arsak, arsakTekst:aa, utfall:celle(r,kart.utfall),
+      kjonn:celle(r,kart.kjonn), alder:celle(r,kart.alder), sted:celle(r,kart.sted), id:celle(r,kart.id)});
   }
   return {punkter, forkastet};
 }
@@ -1274,7 +1289,7 @@ function nyttFilter(){
   const arsaker=sett(p=>p.arsak), aar=ALLE.map(p=>p.aar).filter(Boolean);
   const valgt=new Set(["bil","tog","ukjent"].filter(a=>arsaker.has(a)));
   if(!valgt.size) for(const a of arsaker) valgt.add(a);
-  return {arsak:valgt, art:sett(p=>p.art), utfall:sett(p=>p.utfall),
+  return {arsak:valgt, art:sett(p=>p.art), utfall:sett(p=>p.utfall), kjonn:sett(p=>p.kjonn), alder:sett(p=>p.alder), fylke:"", kommune:"",
     aarFra:aar.length?Math.min(...aar):null, aarTil:aar.length?Math.max(...aar):null,
     mnd:new Set([1,2,3,4,5,6,7,8,9,10,11,12])};
 }
@@ -1283,6 +1298,9 @@ function passer(p,uten){
   if(uten!=="arsak"&&!f.arsak.has(p.arsak)) return false;
   if(uten!=="art"&&!f.art.has(p.art)) return false;
   if(uten!=="utfall"&&!f.utfall.has(p.utfall)) return false;
+  if(uten!=="kjonn"&&!f.kjonn.has(p.kjonn)) return false;
+  if(uten!=="alder"&&!f.alder.has(p.alder)) return false;
+  if(uten!=="omraade"){ if(f.kommune){ if((p.knr||p.kommune)!==f.kommune) return false; } else if(f.fylke&&p.knr.slice(0,2)!==f.fylke) return false; }
   if(uten!=="aar"&&f.aarFra!==null&&p.aar&&(p.aar<f.aarFra||p.aar>f.aarTil)) return false;
   if(uten!=="mnd"&&f.mnd.size<12&&!(p.mnd&&f.mnd.has(p.mnd))) return false;
   return true;
@@ -1312,9 +1330,29 @@ function byggFilter(){
   for(const a of new Set(ALLE.map(p=>p.utfall))) if(!utf.some(x=>x[0]===a)) utf.push([a,0]);
   chips($("cUtfall"),utf,FILTER.utfall,v=>v||"Ikke oppgitt",null,oppdater);
   $("fUtfall").classList.toggle("skjult",utf.length<2);
+  let flere=false;
+  for(const [felt,boks] of [["kjonn","cKjonn"],["alder","cAlder"]]){
+    const v=sorterte(tell(ALLE.filter(p=>passer(p,felt)),p=>p[felt]));
+    for(const a of new Set(ALLE.map(p=>p[felt]))) if(!v.some(x=>x[0]===a)) v.push([a,0]);
+    chips($(boks),v,FILTER[felt],x=>x||"Ikke oppgitt",null,oppdater);
+    $(boks).parentNode.classList.toggle("skjult",v.length<2); if(v.length>=2) flere=true;
+  }
+  $("flereValg").classList.toggle("skjult",!flere);
   const mt=tell(ALLE.filter(p=>passer(p,"mnd")),p=>p.mnd);
   chips($("cMnd"),MND.map((_,i)=>[i+1,mt.get(i+1)||0]),FILTER.mnd,v=>MND[v-1],null,oppdater);
   $("fMnd").classList.toggle("skjult",!ALLE.some(p=>p.mnd));
+}
+function byggOmraade(){
+  const fy=tell(ALLE.filter(p=>p.knr),p=>p.knr.slice(0,2));
+  $("fylke").innerHTML='<option value="">Hele landet</option>'+[...fy.keys()].sort((a,b)=>(FYLKER[a]||a).localeCompare(FYLKER[b]||b,"nb"))
+    .map(k=>`<option value="${k}"${FILTER.fylke===k?" selected":""}>${esc(FYLKER[k]||"Fylke "+k)} (${tallf(fy.get(k))})</option>`).join("");
+  const kom=new Map();
+  for(const p of ALLE){ const k=p.knr||p.kommune; if(!k||(FILTER.fylke&&p.knr.slice(0,2)!==FILTER.fylke)) continue;
+    const x=kom.get(k)||{navn:p.kommune,n:0}; x.n++; kom.set(k,x); }
+  $("kommune").innerHTML='<option value="">Alle kommuner</option>'+[...kom.entries()].sort((a,b)=>a[1].navn.localeCompare(b[1].navn,"nb"))
+    .map(([k,x])=>`<option value="${esc(k)}"${FILTER.kommune===k?" selected":""}>${esc(x.navn)} (${tallf(x.n)})</option>`).join("");
+  $("fylkefelt").classList.toggle("skjult",fy.size<2);
+  $("fOmraade").classList.toggle("skjult",kom.size<2&&fy.size<2);
 }
 function byggAar(){
   const aar=[...new Set(ALLE.map(p=>p.aar).filter(Boolean))].sort((a,b)=>a-b);
@@ -1329,6 +1367,9 @@ function oppdater(){
   const bil=UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet").length, tog=UTVALG.filter(p=>p.arsak==="tog").length;
   $("togmerknad").textContent=`${tallf(bil)} påkjørsler i utvalget blir knyttet til veinettet.`
     +(tog?` ${tallf(tog)} togpåkjørsler vises på kartet, men holdes utenfor.`:"");
+  if(bil){ const g=new Set(); for(const p of UTVALG) if(p.arsak!=="tog"&&p.arsak!=="annet") g.add(Math.round(p.ost/20)+"_"+Math.round(p.nord/20));
+    const min=Math.ceil(g.size/5*0.35/60);
+    $("togmerknad").textContent+=` Det gir om lag ${tallf(g.size)} oppslag`+(min>=2?`, som kan ta rundt ${tallf(min)} minutter. Velg et fylke eller en kommune for å gå raskere.`:"."); }
   $("kjor").disabled=!bil;
   if(RADER) $("utdatert").classList.remove("skjult");
   if($("lag").value==="punkter") visTegnPunkter();
@@ -1388,7 +1429,9 @@ function tegnPunkter(zoom){
        <tr><td>Dato</td><td>${esc(p.dato||"–")}</td></tr>
        <tr><td>Årsak</td><td>${esc(p.arsakTekst||ARSAKNAVN[p.arsak])}</td></tr>
        ${p.utfall?`<tr><td>Utfall</td><td>${esc(p.utfall)}</td></tr>`:""}
-       <tr><td>Kommune</td><td>${esc(p.kommune||"–")}</td></tr>
+       ${p.kjonn||p.alder?`<tr><td>Kjønn og alder</td><td>${esc([p.kjonn,p.alder].filter(Boolean).join(", "))}</td></tr>`:""}
+       <tr><td>Sted</td><td>${esc([p.sted,p.kommune].filter(Boolean).join(", ")||"–")}</td></tr>
+       ${p.id?`<tr><td>Fallvilt-ID</td><td>${esc(p.id)}</td></tr>`:""}
        <tr><td>Koordinat</td><td>${p.lat}, ${p.lon}</td></tr></table></div>`));
   punktlag=L.layerGroup(m);
   if($("lag").value==="punkter") punktlag.addTo(kart);
@@ -1438,7 +1481,7 @@ function velgLag(){
 function visData(zoom){
   for(const id of ["s2","s3","s4","kartverktoy","tegn"]) $(id).classList.remove("skjult");
   $("karttomt").classList.add("skjult");
-  lagKart(); byggAar();
+  lagKart(); byggAar(); byggOmraade();
   setTimeout(()=>{ kart.invalidateSize(); oppdater(); $("utdatert").classList.add("skjult"); tegnPunkter(zoom);
     if(RADER){ $("lag").options[1].disabled=false; visStrekninger(); } },50);
 }
@@ -1450,7 +1493,8 @@ async function lesFil(f){
       const d=JSON.parse(await f.text());
       if(!d||d.format!=="veivakt-viltkart"||!Array.isArray(d.punkter)) throw new Error("Dette er ikke et lagret prosjekt fra verktøyet.");
       ALLE=d.punkter; FILTER=nyttFilter();
-      if(d.filter){ for(const k of ["arsak","art","utfall","mnd"]) if(d.filter[k]) FILTER[k]=new Set(d.filter[k]);
+      if(d.filter){ for(const k of ["arsak","art","utfall","mnd","kjonn","alder"]) if(d.filter[k]) FILTER[k]=new Set(d.filter[k]);
+        FILTER.fylke=d.filter.fylke||""; FILTER.kommune=d.filter.kommune||"";
         FILTER.aarFra=d.filter.aarFra??FILTER.aarFra; FILTER.aarTil=d.filter.aarTil??FILTER.aarTil; }
       RADER=d.rader||null; META=d.meta||{}; streklag=null;
       kv.textContent=`Åpnet prosjektet «${f.name}» med ${tallf(ALLE.length)} registreringer`+(RADER?` og ${tallf(RADER.length)} strekninger.`:".");
@@ -1488,7 +1532,9 @@ $("aarFra").addEventListener("change",e=>{ FILTER.aarFra=+e.target.value; if(FIL
 $("aarTil").addEventListener("change",e=>{ FILTER.aarTil=+e.target.value; if(FILTER.aarFra>FILTER.aarTil){ FILTER.aarFra=FILTER.aarTil; byggAar(); } oppdater(); });
 $("mndAlle").addEventListener("click",()=>{ FILTER.mnd=new Set([1,2,3,4,5,6,7,8,9,10,11,12]); oppdater(); });
 $("mndIngen").addEventListener("click",()=>{ FILTER.mnd=new Set(); oppdater(); });
-$("nullstill").addEventListener("click",()=>{ FILTER=nyttFilter(); byggAar(); oppdater(); });
+$("nullstill").addEventListener("click",()=>{ FILTER=nyttFilter(); byggAar(); byggOmraade(); oppdater(); tegnPunkter(true); });
+$("fylke").addEventListener("change",e=>{ FILTER.fylke=e.target.value; FILTER.kommune=""; byggOmraade(); oppdater(); tegnPunkter(true); });
+$("kommune").addEventListener("change",e=>{ FILTER.kommune=e.target.value; oppdater(); tegnPunkter(true); });
 $("bakgrunn").addEventListener("change",e=>settBakgrunn(e.target.value));
 $("lag").addEventListener("change",velgLag);
 $("zoomut").addEventListener("click",()=>{
@@ -1604,13 +1650,13 @@ function tilGeo(rader,felt){
     geometry:{type:"Point",coordinates:[r.lon,r.lat]},properties:Object.fromEntries(felt.map(k=>[k,r[k]??null]))}))});
 }
 const SFELT=["vegsystemreferanse","veg","vegkategori","meter_fra","meter_til","kommune","antall","per_km_per_aar","adt","per_mill_kjt_km","fartsgrense","fartsgrenser","skiltet_viltfare","viltgjerde","belysning","arter","per_aar","per_maaned","verste_maaned","aar_dekket","median_avstand_veg_m","lat","lon"];
-const PFELT=["art","dato","aar","mnd","time","arsakTekst","utfall","kommune","lat","lon","ost","nord"];
+const PFELT=["id","art","kjonn","alder","dato","aar","mnd","time","arsakTekst","utfall","knr","kommune","sted","lat","lon","ost","nord"];
 $("lastcsv").addEventListener("click",()=>lastNed("strekninger.csv",tilCsv(RADER,SFELT),"text/csv;charset=utf-8"));
 $("lastgeo").addEventListener("click",()=>lastNed("strekninger.geojson",tilGeo(RADER,SFELT),"application/geo+json"));
 $("punktCsv").addEventListener("click",()=>lastNed("paakjorsler-utvalg.csv",tilCsv(UTVALG,PFELT),"text/csv;charset=utf-8"));
 $("punktGeo").addEventListener("click",()=>lastNed("paakjorsler-utvalg.geojson",tilGeo(UTVALG,PFELT),"application/geo+json"));
 $("lagre").addEventListener("click",()=>{
-  const f={arsak:[...FILTER.arsak],art:[...FILTER.art],utfall:[...FILTER.utfall],mnd:[...FILTER.mnd],aarFra:FILTER.aarFra,aarTil:FILTER.aarTil};
+  const f={arsak:[...FILTER.arsak],art:[...FILTER.art],utfall:[...FILTER.utfall],mnd:[...FILTER.mnd],kjonn:[...FILTER.kjonn],alder:[...FILTER.alder],fylke:FILTER.fylke,kommune:FILTER.kommune,aarFra:FILTER.aarFra,aarTil:FILTER.aarTil};
   const rader=RADER?RADER.map(r=>{ const k=Object.assign({},r); delete k._m; return k; }):null;
   lastNed("viltkart-prosjekt.json",JSON.stringify({format:"veivakt-viltkart",versjon:2,lagret:new Date().toISOString(),punkter:ALLE,filter:f,rader,meta:META}),"application/json");
 });
