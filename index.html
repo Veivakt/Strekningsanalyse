@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#141210">
+<meta name="theme-color" content="#0E1B2A">
 <meta name="robots" content="noindex, nofollow">
-<title>Viltpåkjørsler — kartoversikt</title>
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23141210'/%3E%3Ctext x='50' y='68' font-size='52' font-family='monospace' font-weight='700' fill='%23faf8f2' text-anchor='middle'%3EVV%3C/text%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Viltpåkjørsler på kart – VeiVakt</title>
+<meta name="description" content="Se hvor viltpåkjørsler skjer, og finn veistrekningene som skiller seg ut. Bruker fallviltdata fra Hjorteviltregisteret og veinettet i Nasjonal vegdatabank.">
+<link rel="icon" href="https://veivakten.no/favicon.svg" type="image/svg+xml">
 <style>/* required styles */
 
 .leaflet-pane,
@@ -671,211 +671,260 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	}
 </style>
 <style>
-  :root{
-    --blekk:#141210; --papir:#faf8f2; --kort:#fdfcf8;
-    --sand:#f4f1e6; --strek:#ddd6c6; --damp:#5c564d;
-    --n1:#efe7d2; --n2:#e0bf82; --n3:#d08b3c; --n4:#b0532a; --n5:#7d2418;
-    --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{background:var(--papir);color:var(--blekk);font-family:var(--mono);
-    font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%;
-    padding:12px 11px calc(30px + env(safe-area-inset-bottom))}
-  .ramme{max-width:820px;margin:0 auto}
-  .tittel{border:2px solid var(--blekk);background:var(--kort);margin-bottom:12px}
-  .tittel .topp{border-bottom:1px solid var(--blekk);padding:9px 12px;
-    display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
-  h1{font-size:15px;font-weight:700;letter-spacing:.04em;margin:0}
-  .merk{font-size:10px;color:var(--damp);letter-spacing:.05em}
-  .tittel .kropp{padding:9px 12px;font-size:12px;color:#332f29;line-height:1.55}
-  section{border:1.5px solid var(--blekk);background:var(--kort);margin-bottom:12px}
-  section>h2{margin:0;font-size:10.5px;font-weight:700;letter-spacing:.07em;
-    padding:8px 12px;background:var(--blekk);color:var(--papir);
-    display:flex;justify-content:space-between;gap:8px}
-  section>.inn{padding:11px 12px}
-  label{display:block;font-size:12px;font-weight:600;margin:10px 0 4px}
-  label:first-child{margin-top:0}
-  .hint{font-size:11px;color:var(--damp);font-weight:400;line-height:1.45;display:block}
-  input[type=number],select{width:100%;font-family:var(--mono);font-size:15px;
-    padding:9px 10px;border:1.5px solid var(--blekk);background:var(--papir);
-    color:var(--blekk);border-radius:0;-webkit-appearance:none}
-  input[type=file]{width:100%;font-family:var(--mono);font-size:12px}
-  .rad{display:flex;gap:8px}.rad>div{flex:1}
-  .bryter{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:600}
-  .bryter input{width:19px;height:19px;accent-color:var(--n5)}
-  button{font-family:var(--mono);font-size:13.5px;font-weight:700;letter-spacing:.04em;
-    padding:12px 13px;border:1.5px solid var(--blekk);background:var(--blekk);
-    color:var(--papir);width:100%;cursor:pointer;border-radius:0;touch-action:manipulation}
-  button.sek{background:transparent;color:var(--blekk)}
-  button:disabled{opacity:.4}
-  .knapperad{display:flex;gap:7px;margin-top:10px}.knapperad button{flex:1}
-  .skjult{display:none!important}
-  .kvittering{font-size:11.5px;line-height:1.6;background:var(--sand);
-    border:1px solid var(--strek);padding:8px 9px;margin-top:10px;white-space:pre-wrap}
-  progress{width:100%;height:15px;border:1.5px solid var(--blekk);background:var(--sand);
-    -webkit-appearance:none;appearance:none}
-  progress::-webkit-progress-bar{background:var(--sand)}
-  progress::-webkit-progress-value{background:var(--n4)}
-  progress::-moz-progress-bar{background:var(--n4)}
-  .status{font-size:11.5px;margin-top:6px;display:flex;justify-content:space-between;gap:8px}
-  .feil{border:2px solid var(--n5);background:#fdf2ef;padding:10px 11px;
-    font-size:12px;line-height:1.55;margin-top:10px}
-  .feil b{color:var(--n5)}
-
-  /* Kart */
-  #kartboks{position:relative;border:1.5px solid var(--blekk);background:#e8e4da}
-  #kart{height:62vh;min-height:340px;width:100%;background:#e8e4da}
-  .kartlinje{display:flex;gap:7px;padding:8px;border-top:1.5px solid var(--blekk);
-    background:var(--kort);flex-wrap:wrap;align-items:center}
-  .kartlinje select{width:auto;flex:1;min-width:120px;font-size:12.5px;padding:7px 8px}
-  .kartlinje button{width:auto;flex:none;font-size:12px;padding:8px 10px}
-  .tegn{position:absolute;left:8px;bottom:8px;z-index:500;background:rgba(253,252,248,.94);
-    border:1.5px solid var(--blekk);padding:6px 8px;font-size:10px;line-height:1.4}
-  .tegn .skala{display:flex;margin-top:3px}
-  .tegn .skala i{width:20px;height:10px;border:1px solid var(--blekk);border-right:none}
-  .tegn .skala i:last-child{border-right:1px solid var(--blekk)}
-  .tegn .tall{display:flex;justify-content:space-between;font-size:9px;color:var(--damp)}
-  .leaflet-container{font-family:var(--mono);font-size:12px;background:#e8e4da}
-  .leaflet-popup-content-wrapper{border-radius:0;border:1.5px solid var(--blekk);
-    background:var(--kort);box-shadow:0 2px 8px rgba(0,0,0,.25)}
-  .leaflet-popup-content{margin:9px 11px;font-size:12px;line-height:1.55}
-  .leaflet-popup-tip{background:var(--kort);border:1.5px solid var(--blekk)}
-  .pop h3{margin:0 0 5px;font-size:12.5px;font-weight:700}
-  .pop table{border-collapse:collapse;width:100%;font-size:11.5px}
-  .pop td{padding:2px 4px;border-bottom:1px solid var(--strek)}
-  .pop td:last-child{text-align:right;font-weight:700}
-  .pop a{color:var(--n5)}
-
-  /* Liste */
-  .treff{border-top:1px solid var(--strek);padding:8px 2px;cursor:pointer;display:flex;
-    gap:8px;align-items:center}
-  .treff:first-of-type{border-top:none}
-  .rang{font-weight:700;font-size:10.5px;color:var(--papir);background:var(--blekk);
-    padding:1px 5px;min-width:25px;text-align:center;flex:none}
-  .vref{flex:1;font-size:12.5px;font-weight:700;word-break:break-word}
-  .vref small{display:block;font-weight:400;font-size:10.5px;color:var(--damp)}
-  .ant{font-weight:700;font-size:15px;color:var(--n5);flex:none}
-  .fot{border-top:2px solid var(--blekk);margin-top:14px;padding-top:8px;
-    font-size:10px;color:var(--damp);line-height:1.6}
-  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:root{--marine:#16324F;--natt:#0E1B2A;--oransje:#F2860D;--otekst:#A85400;--flate:#F5F7FA;--kort:#FFFFFF;--linje:#D4DCE5;--damp:#46617F;--feil:#B3261E;--ok:#1B6E3C}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.5;color:var(--marine);background:var(--flate)}
+a{color:var(--marine)}
+h1,h2,h3{margin:0;line-height:1.2;letter-spacing:-.01em}
+button,select,input{font:inherit;color:inherit}
+.skjult{display:none !important}
+header.topp{background:var(--natt);color:#fff;padding:14px 20px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+header.topp h1{font-size:21px}
+header.topp p{margin:0;color:#DCE5EE;font-size:15px}
+header.topp .merke{margin-left:auto;font-size:14px;color:#DCE5EE}
+header.topp .merke a{color:#fff}
+.app{display:grid;grid-template-columns:clamp(380px,40vw,640px) 1fr;gap:0;min-height:calc(100vh - 56px)}
+.panel{padding:16px 16px 40px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.kartkol{position:sticky;top:0;height:100vh;min-width:0;border-left:1px solid var(--linje);background:#e9eef3}
+#kart{position:absolute;inset:0}
+.karttomt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--damp);z-index:400;background:#e9eef3}
+.kartverktoy{position:absolute;top:10px;right:10px;z-index:500;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.kartverktoy select,.kartverktoy button{background:#fff;border:1px solid #6B8199;border-radius:4px;padding:7px 10px;font-size:14px;min-height:38px}
+.tegn{position:absolute;left:10px;bottom:22px;z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--linje);border-radius:4px;padding:9px 11px;font-size:13.5px;max-width:240px}
+.tegn b{display:block;margin-bottom:4px}
+.tegn .rad{display:flex;align-items:center;gap:7px}
+.tegn i{width:11px;height:11px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.45);flex:none}
+.tegn .skala{display:flex;height:10px;margin-top:4px}.tegn .skala i{flex:1;border-radius:0;border:0;height:10px}
+.tegn .tall{display:flex;justify-content:space-between;font-size:12.5px}
+.klynge{display:flex;align-items:center;justify-content:center;border-radius:50%;background:#16324F;color:#fff;font-weight:700;font-size:13.5px;box-shadow:0 0 0 5px rgba(22,50,79,.28);cursor:pointer;font-variant-numeric:tabular-nums}
+.kort{background:var(--kort);border:1px solid var(--linje);border-radius:6px;padding:16px}
+.kort>h2{font-size:18px;display:flex;align-items:center;gap:9px}
+.kort>h2 .nr{flex:none;width:26px;height:26px;border-radius:50%;background:var(--marine);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+.kort>h2 small{margin-left:auto;font-weight:500;font-size:14px;color:var(--damp)}
+.kort p{margin:8px 0 0}
+.hint{color:var(--damp);font-size:14.5px}
+ol.slik{margin:10px 0 0;padding-left:20px}ol.slik li{margin:4px 0}
+.slipp{margin-top:12px;border:2px dashed #6B8199;border-radius:6px;padding:18px;text-align:center;background:#F8FAFC;cursor:pointer}
+.slipp.over{border-color:var(--oransje);background:#FFF6EA}
+.slipp strong{display:block}
+.knapp{display:inline-block;background:var(--oransje);color:var(--natt);font-weight:700;border:0;border-radius:4px;padding:11px 18px;cursor:pointer;min-height:44px}
+.knapp:disabled{opacity:.5;cursor:default}
+.knapp.sek{background:#fff;border:1px solid #6B8199;font-weight:600}
+.knapper{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.kvitt{margin-top:12px;padding:10px 12px;border-radius:4px;background:#EEF3F8;font-size:14.5px;white-space:pre-line}
+.kvitt.feil{background:#FCEDEC;color:var(--feil)}
+.kvitt.varsel{background:#FFF6EA;color:#6B3A00}
+fieldset{border:0;margin:14px 0 0;padding:0;min-width:0}
+legend{padding:0;font-weight:700;font-size:15px;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chip span{display:inline-flex;gap:6px;align-items:center;border:1px solid #6B8199;border-radius:999px;padding:5px 11px;font-size:14px;background:#fff;user-select:none}
+.chip span small{color:var(--damp)}
+.chip input:checked+span{background:var(--marine);border-color:var(--marine);color:#fff}
+.chip input:checked+span small{color:#DCE5EE}
+.chip input:focus-visible+span{outline:3px solid var(--oransje);outline-offset:2px}
+.chip span i{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.4)}
+.mnd .chip span{padding:5px 8px;min-width:42px;justify-content:center}
+.rad2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label.felt{display:block;font-size:14.5px;font-weight:600;margin-top:10px}
+label.felt select,label.felt input{display:block;width:100%;margin-top:4px;padding:8px 9px;border:1px solid #6B8199;border-radius:4px;background:#fff;font-weight:400;min-height:40px}
+label.felt small{display:block;font-weight:400;color:var(--damp);margin-top:3px}
+.lenkeknapp{background:none;border:0;padding:0;color:var(--marine);text-decoration:underline;cursor:pointer;font-size:14.5px}
+.stat{margin-top:14px}
+.stat h3{font-size:15px;margin-bottom:6px}
+.soyler{display:flex;align-items:flex-end;gap:3px;height:92px;border-bottom:1px solid var(--linje)}
+.soyler div{flex:1;background:var(--marine);min-height:1px;border-radius:2px 2px 0 0;position:relative}
+.soyler div.topp{background:var(--oransje)}
+.akse{display:flex;gap:3px;font-size:11.5px;color:var(--damp);margin-top:3px}.akse span{flex:1;text-align:center;overflow:hidden;white-space:nowrap}
+.linjer{display:grid;grid-template-columns:auto 1fr auto;gap:4px 9px;align-items:center;font-size:14.5px}
+.linjer .b{height:10px;background:var(--marine);border-radius:2px;min-width:1px}
+.linjer .n{text-align:right;font-variant-numeric:tabular-nums}
+progress{width:100%;height:10px;margin-top:12px}
+.status{display:flex;justify-content:space-between;font-size:14.5px;color:var(--damp)}
+.tabellboks{margin-top:12px;max-height:520px;overflow:auto;border:1px solid var(--linje);border-radius:4px}
+table.strek{border-collapse:collapse;width:100%;font-size:14px}
+table.strek th,table.strek td{padding:7px 9px;border-bottom:1px solid var(--linje);text-align:left;white-space:nowrap}
+table.strek th{position:sticky;top:0;background:#EEF3F8;font-weight:700}
+table.strek th button{background:none;border:0;padding:0;font-weight:700;cursor:pointer;text-align:left}
+table.strek th[aria-sort] button::after{content:" ▼";font-size:10px}
+table.strek th[aria-sort="ascending"] button::after{content:" ▲"}
+table.strek td:first-child{position:sticky;left:0;background:#fff;font-weight:600}
+table.strek th:first-child{left:0;z-index:2}
+table.strek tbody tr:hover td:first-child,table.strek tbody tr:focus td:first-child{background:#FFF6EA}
+table.strek td.t,table.strek th.t{text-align:right;font-variant-numeric:tabular-nums}
+table.strek tbody tr{cursor:pointer}table.strek tbody tr:hover,table.strek tbody tr:focus{background:#FFF6EA;outline:none}
+details{margin-top:4px}details summary{cursor:pointer;font-weight:700;padding:4px 0}
+details ul{margin:6px 0 0;padding-left:20px}details li{margin:4px 0}
+.fot{font-size:13.5px;color:var(--damp)}
+.pop h3{font-size:15px;margin-bottom:4px}.pop table{border-collapse:collapse;font-size:13px}.pop td{padding:1px 8px 1px 0;vertical-align:top}.pop td:first-child{color:#46617F}
+.pop .mini{display:flex;align-items:flex-end;gap:2px;height:34px;margin-top:6px}.pop .mini i{flex:1;background:#16324F;min-height:1px}
+.leaflet-popup-content{margin:10px 12px;font-family:inherit}
+:focus-visible{outline:3px solid var(--oransje);outline-offset:2px}
+@media (max-width:900px){
+.app{grid-template-columns:1fr}
+.kartkol{position:relative;height:62vh;order:-1;border-left:0;border-bottom:1px solid var(--linje)}
+header.topp .merke{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-<div class="ramme">
+<header class="topp">
+  <h1>Viltpåkjørsler på kart</h1>
+  <p>Se hvor påkjørslene skjer, når de skjer, og hvilke veistrekninger som skiller seg ut.</p>
+  <span class="merke">Laget av <a href="https://veivakten.no" rel="noopener">VeiVakt AS</a></span>
+</header>
+<div class="app">
+<main class="panel" id="panel">
 
-  <div class="tittel">
-    <div class="topp">
-      <h1>VILTPÅKJØRSLER — KARTOVERSIKT</h1><span class="merk">VEIVAKT AS</span>
+  <section class="kort" aria-labelledby="t1">
+    <h2 id="t1"><span class="nr">1</span>Hent inn data</h2>
+    <p>Verktøyet bruker fallviltdata som du selv laster ned fra Hjorteviltregisteret. Fila blir på din maskin og sendes ikke til oss.</p>
+    <ol class="slik">
+      <li>Åpne <a href="https://www.hjorteviltregisteret.no/FallviltInnsyn" target="_blank" rel="noopener">Fallvilt innsyn i Hjorteviltregisteret</a>.</li>
+      <li>Velg område, periode og arter. Ta gjerne med alle årsaker og utfall, for de kan velges bort her.</li>
+      <li>Last ned lista som Excel eller CSV.</li>
+    </ol>
+    <div class="slipp" id="slipp" role="button" tabindex="0" aria-describedby="sliphint">
+      <strong>Slipp fila her, eller trykk for å velge</strong>
+      <span class="hint" id="sliphint">Excel (.xlsx), CSV eller et lagret prosjekt (.json)</span>
     </div>
-    <div class="kropp">
-      Viser hvor viltpåkjørsler faktisk skjer, punkt for punkt, og samler dem i
-      strekninger langs vegnettet. Alt regnes ut på enheten din. Datafila di lastes
-      ikke opp noe sted.
+    <input type="file" id="fil" class="skjult" accept=".csv,.txt,.xlsx,.json,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+    <div id="filkvitt" class="kvitt skjult" role="status"></div>
+  </section>
+
+  <section class="kort skjult" id="s2" aria-labelledby="t2">
+    <h2 id="t2"><span class="nr">2</span>Velg ut <small id="utvalgtall"></small></h2>
+    <p class="hint">Kartet og tallene følger valgene dine.</p>
+    <fieldset id="fOmraade"><legend>Område</legend>
+      <div class="rad2">
+        <label class="felt" style="margin-top:0" id="fylkefelt">Fylke<select id="fylke"></select></label>
+        <label class="felt" style="margin-top:0">Kommune<select id="kommune"></select></label>
+      </div>
+    </fieldset>
+    <fieldset id="fArsak"><legend>Årsak</legend><div class="chips" id="cArsak"></div></fieldset>
+    <fieldset id="fArt"><legend>Art</legend><div class="chips" id="cArt"></div></fieldset>
+    <fieldset id="fUtfall"><legend>Utfall</legend><div class="chips" id="cUtfall"></div></fieldset>
+    <fieldset id="fAar"><legend>År</legend>
+      <div class="rad2">
+        <label class="felt" style="margin-top:0">Fra<select id="aarFra"></select></label>
+        <label class="felt" style="margin-top:0">Til<select id="aarTil"></select></label>
+      </div>
+    </fieldset>
+    <fieldset id="fMnd"><legend>Måneder</legend><div class="chips mnd" id="cMnd"></div>
+      <p style="margin-top:6px"><button type="button" class="lenkeknapp" id="mndAlle">Velg alle</button> · <button type="button" class="lenkeknapp" id="mndIngen">Fjern alle</button></p>
+    </fieldset>
+    <details id="flereValg" style="margin-top:12px"><summary>Kjønn og alder</summary>
+      <fieldset><legend>Kjønn</legend><div class="chips" id="cKjonn"></div></fieldset>
+      <fieldset><legend>Alder</legend><div class="chips" id="cAlder"></div></fieldset>
+    </details>
+    <p style="margin-top:12px"><button type="button" class="lenkeknapp" id="nullstill">Nullstill utvalget</button></p>
+  </section>
+
+  <section class="kort skjult" id="s3" aria-labelledby="t3">
+    <h2 id="t3"><span class="nr">3</span>Tall for utvalget</h2>
+    <div class="stat" id="stAar"><h3>Per år</h3><div class="soyler"></div><div class="akse"></div></div>
+    <div class="stat" id="stMnd"><h3>Per måned</h3><div class="soyler"></div><div class="akse"></div></div>
+    <div class="stat" id="stTime"><h3>Per time i døgnet</h3><div class="soyler"></div><div class="akse"></div></div>
+    <div class="stat" id="stArt"><h3>Per art</h3><div class="linjer"></div></div>
+    <div class="stat" id="stUtfall"><h3>Per utfall</h3><div class="linjer"></div></div>
+    <div class="knapper">
+      <button type="button" class="knapp sek" id="punktCsv">Last ned utvalget (CSV)</button>
+      <button type="button" class="knapp sek" id="punktGeo">GeoJSON</button>
     </div>
+  </section>
+
+  <section class="kort skjult" id="s4" aria-labelledby="t4">
+    <h2 id="t4"><span class="nr">4</span>Finn strekningene</h2>
+    <p>Hver påkjørsel med bil knyttes til nærmeste vei i Nasjonal vegdatabank, og hver påkjørsel med tog til nærmeste bane i Bane NORs jernbanenett. Påkjørslene samles i like lange strekninger. Da ser du hvilke strekninger som har flest påkjørsler.</p>
+    <p class="hint" id="togmerknad"></p>
+    <div class="rad2">
+      <label class="felt">Lengde på strekning<select id="bin"><option value="250">250 m</option><option value="500" selected>500 m</option><option value="1000">1 km</option><option value="2000">2 km</option></select></label>
+      <label class="felt">Største avstand til vei eller bane<select id="maksavstand"><option value="30">30 m</option><option value="60" selected>60 m</option><option value="100">100 m</option><option value="200">200 m</option></select></label>
+    </div>
+    <fieldset><legend>Veidata fra Nasjonal vegdatabank</legend>
+      <div class="chips" id="cVeidata">
+        <label class="chip"><input type="checkbox" value="adt" checked><span>Trafikkmengde (ÅDT)</span></label>
+        <label class="chip"><input type="checkbox" value="fartsgrense" checked><span>Fartsgrense</span></label>
+        <label class="chip"><input type="checkbox" value="skiltet_viltfare"><span>Skiltet viltfare</span></label>
+        <label class="chip"><input type="checkbox" value="viltgjerde"><span>Viltgjerde</span></label>
+        <label class="chip"><input type="checkbox" value="belysning"><span>Veibelysning</span></label>
+      </div>
+      <p class="hint" style="margin-top:6px">Velg hva som skal hentes for hver strekning. Trafikkmengden gjør det mulig å skille strekninger med mye vilt fra strekninger med mye trafikk.</p>
+    </fieldset>
+    <label class="felt">Hent veidata for<select id="toppadt"><option value="0">ingen strekninger</option><option value="40" selected>de 40 øverste</option><option value="100">de 100 øverste</option><option value="300">de 300 øverste</option><option value="100000">alle strekninger</option></select>
+      <small>Flere strekninger og flere typer veidata tar lengre tid.</small></label>
+    <div class="knapper">
+      <button type="button" class="knapp" id="kjor">Finn strekningene</button>
+      <button type="button" class="knapp sek skjult" id="stopp">Stopp</button>
+    </div>
+    <div id="fremdrift" class="skjult"><progress id="bar" value="0" max="100"></progress>
+      <div class="status" role="status"><span id="statustekst"></span><span id="statustall"></span></div></div>
+    <div id="feilboks" class="kvitt feil skjult" role="alert"></div>
+    <p class="hint">Store utvalg tar tid. Ett fylke og noen få år går raskest.</p>
+  </section>
+
+  <section class="kort skjult" id="s5" aria-labelledby="t5">
+    <h2 id="t5"><span class="nr">5</span>Strekninger <small id="antallbins"></small></h2>
+    <div id="utdatert" class="kvitt varsel skjult">Utvalget er endret etter at strekningene ble funnet. Tabellen viser det forrige utvalget. Kjør steg 4 på nytt for å oppdatere.</div>
+    <div id="sammendrag" class="kvitt"></div>
+    <div class="rad2">
+      <label class="felt">Søk etter vei eller kommune<input type="search" id="sok" placeholder="f.eks. FV33 eller Gjøvik"></label>
+      <label class="felt">Type<select id="vegkat"><option value="">Alle</option><option value="J">Jernbane</option><option value="E">Europavei</option><option value="R">Riksvei</option><option value="F">Fylkesvei</option><option value="K">Kommunal vei</option><option value="P">Privat vei</option></select></label>
+    </div>
+    <div class="tabellboks"><table class="strek" id="tabell"><thead><tr></tr></thead><tbody></tbody></table></div>
+    <p class="hint" id="tabellnote"></p>
+    <div class="knapper">
+      <button type="button" class="knapp sek" id="lastcsv">Last ned strekninger (CSV)</button>
+      <button type="button" class="knapp sek" id="lastgeo">GeoJSON</button>
+      <button type="button" class="knapp sek" id="lagre">Lagre prosjekt</button>
+    </div>
+    <p class="hint">Et lagret prosjekt kan åpnes igjen i steg 1, uten å finne strekningene på nytt.</p>
+  </section>
+
+  <section class="kort" aria-labelledby="t6">
+    <h2 id="t6">Metode og begrensninger</h2>
+    <details><summary>Slik regner verktøyet</summary><ul>
+      <li>Punkter som ligger mindre enn 20 meter fra hverandre, slås sammen før oppslaget mot veinettet.</li>
+      <li>Hvert punkt knyttes til nærmeste vei innenfor avstanden du velger. Punkter som ligger lenger unna, holdes utenfor.</li>
+      <li>Strekningene følger meterverdiene i vegsystemreferansen, for eksempel «FV33 S3D1 m1500–2000».</li>
+      <li>Påkjørsler per kilometer per år = antall delt på strekningens lengde og antall år i utvalget.</li>
+      <li>Påkjørsler per million kjøretøykilometer = antall delt på ÅDT × 365 × lengde × antall år.</li>
+    </ul></details>
+    <details><summary>Dette bør du være klar over</summary><ul>
+      <li>Mange påkjørsler blir aldri registrert. Tallene er minimumstall.</li>
+      <li>Punktene er satt av den som registrerte fallviltet, og nøyaktigheten varierer.</li>
+      <li>Der to veier går parallelt, kan et punkt bli knyttet til feil vei. Se kolonnen «Avstand til vei».</li>
+      <li>Togpåkjørsler knyttes til nærmeste bane og samles i strekninger etter banens kilometrering, for eksempel «Rørosbanen km 120–120,5». Der to baner går tett, kan et punkt havne på feil bane.</li>
+      <li>Verktøyet tar bare med hjortevilt: elg, hjort, rådyr, villrein og hjortedyr som ikke er artsbestemt. Andre arter i fila holdes utenfor.</li>
+      <li>Når kartet er zoomet ut, samles påkjørsler som ligger nær hverandre, i en sirkel med antall. Sirklene følger kartutsnittet og er ikke det samme som strekningene i steg 5.</li>
+      <li>Faste strekningsgrenser kan dele en opphopning i to. Prøv gjerne en annen strekningslengde.</li>
+      <li>Veidata gjelder hele strekningen. Der det finnes flere verdier for ÅDT eller fartsgrense, vises den høyeste i tabellen.</li>
+      <li>«Skiltet viltfare» betyr at strekningen er registrert med viltfareskilt. «Viltgjerde» og «Veibelysning» viser om det er registrert noe slikt på strekningen, ikke om det dekker hele.</li>
+      <li>Vegdatabanken er ikke alltid fullstendig. «Nei» betyr at ingenting er registrert.</li>
+    </ul></details>
+    <details><summary>Kilder</summary><ul>
+      <li>Fallvilt: Hjorteviltregisteret, Miljødirektoratet.</li>
+      <li>Veinett og trafikkmengde: Nasjonal vegdatabank, Statens vegvesen (NLOD).</li>
+      <li>Jernbanenett: Jernbane – Banenettverk, Bane NOR SF, via Geonorge (NLOD).</li>
+      <li>Bakgrunnskart: © Kartverket.</li>
+    </ul></details>
+    <p class="fot">Verktøyet er laget av VeiVakt AS som del av arbeidet i forskningsprosjektet WILDETECT. Spørsmål og ønsker: <a href="mailto:benjamin@veivakten.no">benjamin@veivakten.no</a></p>
+  </section>
+</main>
+
+<div class="kartkol">
+  <div id="kart" role="application" aria-label="Kart over påkjørsler"></div>
+  <div class="karttomt" id="karttomt">Kartet vises når du har hentet inn data.</div>
+  <div class="kartverktoy skjult" id="kartverktoy">
+    <select id="lag" aria-label="Kartlag"><option value="punkter">Enkeltpåkjørsler</option><option value="strekninger" disabled>Strekninger</option></select>
+    <select id="bakgrunn" aria-label="Bakgrunnskart"><option value="topograatone">Gråtonekart</option><option value="topo">Fargekart</option></select>
+    <button type="button" id="zoomut">Vis alt</button>
   </div>
-
-  <section>
-    <h2>1 · LAST INN FALLVILTDATA</h2>
-    <div class="inn">
-      <label>CSV fra Hjorteviltregisteret
-        <span class="hint">Fallvilt innsyn → filtrer på årsak og periode → last ned.
-        Excel-fil må lagres som CSV først.</span>
-      </label>
-      <input type="file" id="fil" accept=".csv,.txt,text/csv,text/plain">
-      <div class="bryter">
-        <input type="checkbox" id="tog"><label for="tog" style="margin:0">Ta med togpåkjørsler</label>
-      </div>
-      <div id="filkvittering" class="kvittering skjult"></div>
-    </div>
-  </section>
-
-  <section id="kartseksjon" class="skjult">
-    <h2>2 · KART <span id="karttittel" class="merk"></span></h2>
-    <div id="kartboks">
-      <div id="kart"></div>
-      <div class="tegn" id="tegnforklaring">
-        <div id="tegntekst"><b>Enkeltpåkjørsler</b></div>
-      </div>
-    </div>
-    <div class="kartlinje">
-      <select id="lag">
-        <option value="punkter">Enkeltpåkjørsler</option>
-        <option value="strekninger" disabled>Strekninger (krever kartfesting)</option>
-      </select>
-      <select id="bakgrunn">
-        <option value="topograatone">Gråtonekart</option>
-        <option value="topo">Fargekart</option>
-      </select>
-      <button id="zoomut" class="sek">VIS ALT</button>
-    </div>
-  </section>
-
-  <section id="vegseksjon" class="skjult">
-    <h2>3 · KARTFEST MOT VEGNETTET</h2>
-    <div class="inn">
-      <span class="hint">Snapper hver påkjørsel til nærmeste veg i Statens vegvesens
-      vegnett og samler dem i faste strekninger, slik at du ser hvilke som skiller seg ut.
-      Kjør gjerne ett fylke om gangen — hele landet tar lang tid på mobil.</span>
-      <div class="rad" style="margin-top:10px">
-        <div>
-          <label>Strekningslengde (m)</label>
-          <input type="number" id="bin" value="500" min="100" max="5000" step="100" inputmode="numeric">
-        </div>
-        <div>
-          <label>Maks avstand til veg (m)</label>
-          <input type="number" id="maksavstand" value="60" min="10" max="300" step="10" inputmode="numeric">
-        </div>
-      </div>
-      <div class="rad" style="margin-top:10px">
-        <div>
-          <label>Antall år i datasettet</label>
-          <input type="number" id="aar" value="0" min="0" max="50" step="1" inputmode="numeric">
-          <span class="hint">0 = tell fra datokolonnen</span>
-        </div>
-        <div>
-          <label>Hent ÅDT for topp</label>
-          <input type="number" id="toppadt" value="40" min="0" max="300" step="10" inputmode="numeric">
-          <span class="hint">Trafikkmengde fra NVDB</span>
-        </div>
-      </div>
-      <div class="knapperad"><button id="kjor">KARTFEST OG SAMLE</button></div>
-      <button id="stopp" class="sek skjult" style="margin-top:8px">STOPP</button>
-      <div id="fremdrift" class="skjult" style="margin-top:11px">
-        <progress id="bar" value="0" max="100"></progress>
-        <div class="status"><span id="statustekst">—</span><span id="statustall"></span></div>
-      </div>
-      <div id="feilboks" class="feil skjult"></div>
-    </div>
-  </section>
-
-  <section id="resultatseksjon" class="skjult">
-    <h2>4 · STREKNINGER <span id="antallbins" class="merk"></span></h2>
-    <div class="inn">
-      <div id="sammendrag" class="kvittering"></div>
-      <label style="margin-top:11px">Sorter etter</label>
-      <select id="sortering">
-        <option value="antall">Antall påkjørsler</option>
-        <option value="per_km_per_aar">Påkjørsler per km per år</option>
-        <option value="per_mill_kjt_km">Per million kjøretøykm</option>
-      </select>
-      <div id="liste" style="margin-top:10px"></div>
-      <div class="knapperad">
-        <button id="lastcsv" class="sek">LAST NED CSV</button>
-        <button id="lastgeo" class="sek">GEOJSON</button>
-      </div>
-      <button id="del" class="sek skjult" style="margin-top:8px">DEL</button>
-    </div>
-  </section>
-
-  <div class="fot">
-    Bakgrunnskart © Kartverket. Vegdata: Nasjonal vegdatabank, Statens vegvesen (NLOD).
-    Fallvilt: Hjorteviltregisteret, Miljødirektoratet. Fallvilt er underrapportert —
-    tallene er minimumstall. Punktene er stedfestet av den som registrerte fallviltet
-    og har varierende nøyaktighet; snapping til nærmeste veg kan feilplassere punkter
-    der veger går parallelt. Se median avstand til veg per strekning.
-    <br><br>VeiVakt AS · veivakten.no
-  </div>
+  <div class="tegn skjult" id="tegn"></div>
+</div>
 </div>
 
 <script>/* @preserve
@@ -886,7 +935,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 //# sourceMappingURL=leaflet.js.map</script>
 <script>
 "use strict";
-
 /* ══ Koordinater: WGS84 ⇄ UTM33N (EPSG:25833) ══ */
 const K0=0.9996, A=6378137.0, F=1/298.257223563;
 const E2=F*(2-F), EP2=E2/(1-E2), LON0=15*Math.PI/180;
@@ -918,7 +966,6 @@ function tilWgs84(ost,nord){
   return [lat*180/Math.PI, lon*180/Math.PI];
 }
 
-/* ══ CSV ══ */
 function parseCsv(tekst){
   tekst=tekst.replace(/^\uFEFF/,"");
   const slutt=tekst.indexOf("\n");
@@ -939,59 +986,147 @@ function parseCsv(tekst){
   return {hoder, rader:rader.filter(r=>r.some(v=>String(v).trim()!==""))};
 }
 
+
+/* ══ Excel (.xlsx) uten bibliotek ══ */
+async function pakkUt(buf){
+  const dv=new DataView(buf), u8=new Uint8Array(buf), filer=new Map();
+  let i=buf.byteLength-22;
+  while(i>=0&&dv.getUint32(i,true)!==0x06054b50) i--;
+  if(i<0) throw new Error("Fila er ikke en gyldig Excel-fil.");
+  const antall=dv.getUint16(i+10,true); let p=dv.getUint32(i+16,true);
+  const td=new TextDecoder();
+  for(let k=0;k<antall;k++){
+    if(dv.getUint32(p,true)!==0x02014b50) break;
+    const metode=dv.getUint16(p+10,true), csize=dv.getUint32(p+20,true);
+    const nl=dv.getUint16(p+28,true), el=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true);
+    const lokal=dv.getUint32(p+42,true), navn=td.decode(u8.subarray(p+46,p+46+nl));
+    const lnl=dv.getUint16(lokal+26,true), lel=dv.getUint16(lokal+28,true);
+    const start=lokal+30+lnl+lel, data=u8.subarray(start,start+csize);
+    filer.set(navn,{metode,data});
+    p+=46+nl+el+cl;
+  }
+  return async navn=>{
+    const f=filer.get(navn); if(!f) return null;
+    if(f.metode===0) return td.decode(f.data);
+    if(typeof DecompressionStream==="undefined") throw new Error("Nettleseren kan ikke lese Excel-filer. Lagre fila som CSV og prøv igjen.");
+    const s=new Blob([f.data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    return await new Response(s).text();
+  };
+}
+function excelDato(n){
+  const ms=Math.round((n-25569)*86400000), d=new Date(ms), z=x=>String(x).padStart(2,"0");
+  let t=`${d.getUTCFullYear()}-${z(d.getUTCMonth()+1)}-${z(d.getUTCDate())}`;
+  if(Math.abs(n-Math.round(n))>1e-6) t+=` ${z(d.getUTCHours())}:${z(d.getUTCMinutes())}`;
+  return t;
+}
+async function parseXlsx(buf){
+  const les=await pakkUt(buf), dp=new DOMParser();
+  const xml=async n=>{const t=await les(n); return t?dp.parseFromString(t,"application/xml"):null;};
+  const delt=[]; const sx=await xml("xl/sharedStrings.xml");
+  if(sx) for(const si of sx.getElementsByTagName("si"))
+    delt.push([...si.getElementsByTagName("t")].map(t=>t.textContent).join(""));
+  let ark="xl/worksheets/sheet1.xml";
+  const wb=await xml("xl/workbook.xml"), rel=await xml("xl/_rels/workbook.xml.rels");
+  if(wb&&rel){
+    const s=wb.getElementsByTagName("sheet")[0];
+    const rid=s&&(s.getAttribute("r:id")||s.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id"));
+    const r=[...rel.getElementsByTagName("Relationship")].find(x=>x.getAttribute("Id")===rid);
+    if(r){ const t=r.getAttribute("Target"); ark=t.startsWith("/")?t.slice(1):"xl/"+t; }
+  }
+  const doc=await xml(ark); if(!doc) throw new Error("Fant ikke noe regneark i fila.");
+  const kol=ref=>{let n=0; for(const c of ref){ const k=c.charCodeAt(0); if(k<65||k>90) break; n=n*26+k-64; } return n-1;};
+  const rader=[];
+  for(const row of doc.getElementsByTagName("row")){
+    const r=[];
+    for(const c of row.getElementsByTagName("c")){
+      const t=c.getAttribute("t"), v=c.getElementsByTagName("v")[0];
+      let verdi="";
+      if(t==="s") verdi=delt[+((v&&v.textContent)||0)]||"";
+      else if(t==="inlineStr") verdi=[...c.getElementsByTagName("t")].map(x=>x.textContent).join("");
+      else if(v) verdi=v.textContent;
+      r[kol(c.getAttribute("r")||"A")]=verdi;
+    }
+    for(let i=0;i<r.length;i++) if(r[i]===undefined) r[i]="";
+    rader.push(r);
+  }
+  const hoder=(rader.shift()||[]).map(h=>String(h).trim());
+  return {hoder, rader:rader.filter(r=>r.some(v=>String(v).trim()!=="")), excel:true};
+}
+
+/* ══ Kolonner og rader ══ */
 const HINT={
   lat:["breddegrad","lat","latitude"], lon:["lengdegrad","lon","lng","longitude"],
   nord:["nord","northing","utmnord"], ost:["øst","ost","easting","utmost"],
   dato:["dato","funnetdato","hendelsesdato","registrert","date"],
+  tid:["klokkeslett","tidspunkt","klokke","tid"],
   art:["art","dyreart","species"],
-  arsak:["årsak","arsak","bakgrunn","dødsårsak","dodsarsak","utfall","hendelse"],
-  kommune:["kommune","kommunenavn"]
+  arsak:["årsak","arsak","bakgrunn","dødsårsak","dodsarsak","hendelse"],
+  utfall:["utfall","resultat"],
+  kommune:["kommune","kommunenavn"],
+  kjonn:["kjønn","kjonn"], alder:["alder","alderskategori"],
+  sted:["stedfesting","stedsnavn","sted"], id:["fallviltid","fallviltnr","id"]
 };
+const BARE_EKSAKT=new Set(["tid","id"]);
+const FYLKER={"03":"Oslo","11":"Rogaland","15":"Møre og Romsdal","18":"Nordland","31":"Østfold","32":"Akershus","33":"Buskerud","34":"Innlandet","39":"Vestfold","40":"Telemark","42":"Agder","46":"Vestland","50":"Trøndelag","55":"Troms","56":"Finnmark"};
 const norm=s=>String(s).toLowerCase().replace(/[^a-zæøå0-9]/g,"");
 function finnKolonner(hoder){
-  const kart={}, n=hoder.map(norm);
+  const kart={}, n=hoder.map(norm), brukt=new Set();
   for(const [felt,hint] of Object.entries(HINT)){
     let idx=-1;
-    for(const h of hint){ idx=n.indexOf(norm(h)); if(idx>=0) break; }
-    if(idx<0) for(const h of hint){ const hn=norm(h);
-      idx=n.findIndex(x=>hn&&x.includes(hn)); if(idx>=0) break; }
-    kart[felt]=idx>=0?idx:null;
+    for(const h of hint){ idx=n.findIndex((x,i)=>x===norm(h)&&!brukt.has(i)); if(idx>=0) break; }
+    if(idx<0&&!BARE_EKSAKT.has(felt)) for(const h of hint){ const hn=norm(h);
+      idx=n.findIndex((x,i)=>hn&&x.includes(hn)&&!brukt.has(i)); if(idx>=0) break; }
+    kart[felt]=idx>=0?idx:null; if(idx>=0) brukt.add(idx);
   }
   if(kart.lat!==null&&kart.lon!==null){ kart.nord=null; kart.ost=null; }
   return kart;
 }
-const RE_BIL=/(p[åa]kj).*(bil|motorkj|kj[øo]ret)/i;
-const RE_TOG=/(p[åa]kj).*(tog|jernban)/i;
-
-function lesPunkter(rader,kart,medTog){
+const RE_BIL=/p[åa]kj.*(bil|motorkj|kj[øo]ret)/i, RE_TOG=/p[åa]kj.*(tog|jernban)/i;
+function lesDato(s){
+  s=String(s||"").trim(); let m, ut={aar:null,mnd:null,time:null,tekst:s};
+  if((m=s.match(/((?:19|20)\d{2})[-.\/](\d{1,2})[-.\/](\d{1,2})/))){ ut.aar=+m[1]; ut.mnd=+m[2]; }
+  else if((m=s.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-]((?:19|20)\d{2})/))){ ut.aar=+m[3]; ut.mnd=+m[2]; }
+  else if((m=s.match(/(19|20)\d{2}/))) ut.aar=+m[0];
+  if(ut.mnd!==null&&(ut.mnd<1||ut.mnd>12)) ut.mnd=null;
+  if((m=s.match(/[T\s](\d{1,2})[:.](\d{2})/))&&+m[1]<24) ut.time=+m[1];
+  return ut;
+}
+/* WILDETECT gjelder hjortevilt. Andre arter leses ikke inn. Utvid listen her for å ta dem med. */
+const ARTER_MED=/^(elg|hjort|rådyr|villrein|dåhjort|sika|hjortedyr)/i;
+const stor=s=>s?s.charAt(0).toUpperCase()+s.slice(1).toLowerCase():s;
+function lesPunkter(rader,kart,excel){
   const punkter=[], forkastet={};
   const tell=g=>forkastet[g]=(forkastet[g]||0)+1;
-  const tall=v=>parseFloat(String(v||"").replace(",","."));
+  const tall=v=>parseFloat(String(v??"").replace(",","."));
+  const celle=(r,k)=>k===null?"":String(r[k]??"").trim();
   for(const r of rader){
-    if(kart.arsak!==null){
-      const aa=String(r[kart.arsak]||"");
-      if(!(RE_BIL.test(aa)||(medTog&&RE_TOG.test(aa)))){ tell("ikke påkjørsel"); continue; }
-    }
     let ost,nord,lat,lon;
-    if(kart.nord!==null&&kart.ost!==null&&String(r[kart.nord]||"").trim()!==""){
+    if(kart.nord!==null&&kart.ost!==null&&celle(r,kart.nord)!==""){
       ost=tall(r[kart.ost]); nord=tall(r[kart.nord]);
-      if(!isFinite(ost)||!isFinite(nord)){ tell("manglende koordinat"); continue; }
+      if(!isFinite(ost)||!isFinite(nord)){ tell("mangler koordinat"); continue; }
       [lat,lon]=tilWgs84(ost,nord);
-      if(!(lat>57&&lat<72&&lon>4&&lon<32)){ tell("koordinat utenfor Norge"); continue; }
     } else if(kart.lat!==null&&kart.lon!==null){
       lat=tall(r[kart.lat]); lon=tall(r[kart.lon]);
-      if(!isFinite(lat)||!isFinite(lon)){ tell("manglende koordinat"); continue; }
-      if(!(lat>57&&lat<72&&lon>4&&lon<32)){ tell("koordinat utenfor Norge"); continue; }
+      if(!isFinite(lat)||!isFinite(lon)){ tell("mangler koordinat"); continue; }
       [ost,nord]=tilUtm33(lat,lon);
-    } else { tell("manglende koordinat"); continue; }
-    let aar=null, dato="";
-    if(kart.dato!==null){
-      dato=String(r[kart.dato]||"").trim();
-      const m=dato.match(/(19|20)\d{2}/); if(m) aar=parseInt(m[0],10);
+    } else { tell("mangler koordinat"); continue; }
+    if(!(lat>57&&lat<72&&lon>4&&lon<32)){ tell("koordinat utenfor Norge"); continue; }
+    let ds=celle(r,kart.dato);
+    if(excel&&/^\d+(\.\d+)?$/.test(ds)&&+ds>20000&&+ds<80000) ds=excelDato(+ds);
+    const d=lesDato(ds);
+    if(d.time===null&&kart.tid!==null){
+      let ts=celle(r,kart.tid), m;
+      if(excel&&/^0?\.\d+$/.test(ts)) d.time=Math.floor(+ts*24);
+      else if((m=ts.match(/^(\d{1,2})[:.]\d{2}/))&&+m[1]<24) d.time=+m[1];
     }
-    punkter.push({ost:+ost.toFixed(2), nord:+nord.toFixed(2), lat:+lat.toFixed(6),
-      lon:+lon.toFixed(6), art:kart.art!==null?String(r[kart.art]||"").trim():"",
-      aar, dato, kommune:kart.kommune!==null?String(r[kart.kommune]||"").trim():""});
+    const art=stor(celle(r,kart.art));
+    if(kart.art!==null&&art&&!ARTER_MED.test(art)){ tell("andre arter enn hjortevilt"); continue; }
+    const aa=celle(r,kart.arsak), kt=celle(r,kart.kommune), kom=kt.match(/^(\d{4})\s+(.+)$/);
+    const arsak=kart.arsak===null?"ukjent":RE_BIL.test(aa)?"bil":RE_TOG.test(aa)?"tog":"annet";
+    punkter.push({ost:+ost.toFixed(2), nord:+nord.toFixed(2), lat:+lat.toFixed(6), lon:+lon.toFixed(6),
+      art:art||"Ukjent", aar:d.aar, mnd:d.mnd, time:d.time, dato:d.tekst,
+      kommune:kom?kom[2]:kt, knr:kom?kom[1]:"", arsak, arsakTekst:aa, utfall:celle(r,kart.utfall),
+      kjonn:celle(r,kart.kjonn), alder:celle(r,kart.alder), sted:celle(r,kart.sted), id:celle(r,kart.id)});
   }
   return {punkter, forkastet};
 }
@@ -1060,6 +1195,8 @@ function lesVegref(t){
   return {kategori:vs.vegkategori||"?", nummer:+vs.nummer, strekning:st.strekning,
     delstrekning:st.delstrekning, meter:+st.meter, kommune:t.kommune, avstand:t.avstand};
 }
+
+const MND=["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
 function aggreger(grp,bin,antallAar){
   const bins=new Map(); let ustedfestet=0;
   for(const g of grp){
@@ -1067,315 +1204,622 @@ function aggreger(grp,bin,antallAar){
     if(!vr){ ustedfestet+=g.medlemmer.length; continue; }
     const b=Math.floor(vr.meter/bin);
     const n=`${vr.kategori}|${vr.nummer}|${vr.strekning}|${vr.delstrekning}|${b}`;
-    if(!bins.has(n)) bins.set(n,{vr,b,antall:0,arter:new Map(),aar:new Map(),
-      maaneder:new Map(),ost:[],nord:[],avstander:[],kommuner:new Map()});
+    if(!bins.has(n)) bins.set(n,{vr,b,antall:0,arter:new Map(),aar:new Map(),mnd:new Array(12).fill(0),
+      ost:[],nord:[],avstander:[],kommuner:new Map()});
     const s=bins.get(n);
     for(const m of g.medlemmer){
       s.antall++;
-      const a=m.art||"ukjent"; s.arter.set(a,(s.arter.get(a)||0)+1);
+      s.arter.set(m.art,(s.arter.get(m.art)||0)+1);
       if(m.aar) s.aar.set(m.aar,(s.aar.get(m.aar)||0)+1);
-      const mm=(m.dato.match(/\d{4}-(\d{2})/)||[])[1];
-      if(mm) s.maaneder.set(+mm,(s.maaneder.get(+mm)||0)+1);
+      if(m.mnd) s.mnd[m.mnd-1]++;
+      if(m.kommune) s.kommuner.set(m.kommune,(s.kommuner.get(m.kommune)||0)+1);
       s.ost.push(m.ost); s.nord.push(m.nord);
     }
     if(vr.avstand!=null) s.avstander.push(vr.avstand);
-    if(vr.kommune) s.kommuner.set(vr.kommune,(s.kommuner.get(vr.kommune)||0)+g.medlemmer.length);
   }
-  const snitt=a=>a.reduce((x,y)=>x+y,0)/a.length;
-  const MND=["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
-  const rader=[];
+  const snitt=a=>a.reduce((x,y)=>x+y,0)/a.length, rader=[];
   for(const s of bins.values()){
-    const mFra=s.b*bin, mTil=(s.b+1)*bin;
-    const aar=antallAar||s.aar.size||1;
+    const mFra=s.b*bin, mTil=(s.b+1)*bin, aar=antallAar||s.aar.size||1;
     const avst=s.avstander.slice().sort((a,b)=>a-b);
     const [la,lo]=tilWgs84(snitt(s.ost),snitt(s.nord));
-    const topMnd=[...s.maaneder.entries()].sort((a,b)=>b[1]-a[1])[0];
+    const topp=Math.max(...s.mnd), ti=s.mnd.indexOf(topp);
     rader.push({
       vegsystemreferanse:`${s.vr.kategori}V${s.vr.nummer} S${s.vr.strekning}D${s.vr.delstrekning} m${mFra}-${mTil}`,
       sok:`${s.vr.kategori}V${s.vr.nummer}S${s.vr.strekning}D${s.vr.delstrekning}m${mFra}-${mTil}`,
-      veg:`${s.vr.kategori}V${s.vr.nummer}`, meter_fra:mFra, meter_til:mTil,
+      veg:`${s.vr.kategori}V${s.vr.nummer}`, vegkategori:s.vr.kategori, meter_fra:mFra, meter_til:mTil,
+      kommune:s.kommuner.size?[...s.kommuner.entries()].sort((a,b)=>b[1]-a[1])[0][0]:(s.vr.kommune!=null?String(s.vr.kommune):null),
       antall:s.antall, per_km_per_aar:+(s.antall/(bin/1000)/aar).toFixed(2),
-      arter:[...s.arter.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}:${v}`).join(", "),
-      per_aar:[...s.aar.entries()].sort((a,b)=>a[0]-b[0]).map(([k,v])=>`${k}:${v}`).join(", "),
-      verste_maaned:topMnd?`${MND[topMnd[0]-1]} (${topMnd[1]})`:null,
-      aar_dekket:s.aar.size||null,
+      adt:null, per_mill_kjt_km:null,
+      arter:[...s.arter.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${v}`).join(", "),
+      per_aar:[...s.aar.entries()].sort((a,b)=>a[0]-b[0]).map(([k,v])=>`${k}: ${v}`).join(", "),
+      per_maaned:s.mnd.join(","),
+      verste_maaned:topp>0?MND[ti]:null,
+      aar_dekket:antallAar||s.aar.size||null,
       median_avstand_veg_m:avst.length?+avst[Math.floor(avst.length/2)].toFixed(1):null,
-      kommune:s.kommuner.size?[...s.kommuner.entries()].sort((a,b)=>b[1]-a[1])[0][0]:null,
-      lat:+la.toFixed(6), lon:+lo.toFixed(6), adt:null, per_mill_kjt_km:null
+      lat:+la.toFixed(6), lon:+lo.toFixed(6)
     });
   }
   rader.sort((a,b)=>b.antall-a.antall);
   return {rader, ustedfestet};
 }
-async function hentAdt(rader,topp,bin,framdrift){
-  let egid=4623;
+/* ══ Jernbanenett fra Bane NOR ══ */
+const JB_FIL="/jernbane.json", JB_CELLE=2000;
+const JB_WFS="https://wfs.geonorge.no/skwms1/wfs.banenettverk?service=WFS&version=2.0.0&request=GetFeature&typeNames=app:Banelenke&srsName=urn:ogc:def:crs:EPSG::25833";
+let JERNBANE=null;
+function lesBanelenker(tekst){
+  const dok=new DOMParser().parseFromString(tekst,"application/xml");
+  if(dok.getElementsByTagName("parsererror").length) throw new Error("jernbane");
+  const ut=[];
+  for(const el of dok.getElementsByTagNameNS("*","Banelenke")){
+    const felt={}; let pos=[];
+    for(const d of el.getElementsByTagName("*")){
+      const n=d.localName;
+      if(n==="posList") pos=pos.concat(d.textContent.trim().split(/\s+/).map(Number));
+      else if(!d.children.length&&d.textContent.trim()&&!(n in felt)) felt[n]=d.textContent.trim();
+    }
+    if(pos.length<4) continue;
+    let k=[]; for(let i=0;i+1<pos.length;i+=2) k.push(pos[i],pos[i+1]);
+    if(k[0]>3e6) k=k.map((v,i)=>i%2?k[i-1]:k[i+1]);
+    const navn=Object.entries(felt).find(([a])=>/navn/i.test(a)), st=Object.entries(felt).find(([a])=>/status$/i.test(a));
+    if(st&&/^p$/i.test(st[1])) continue;
+    const f=parseFloat(felt.startposisjon), t=parseFloat(felt.sluttposisjon);
+    ut.push({n:navn?navn[1]:"", f:isFinite(f)?f:null, t:isFinite(t)?t:null, s:st?st[1]:"", k});
+  }
+  return ut;
+}
+function byggJernbane(lenker,kilde,hentet){
+  const nett={lenker:[],rute:new Map(),kilde,hentet};
+  lenker.forEach((l,li)=>{
+    const k=l.k, cum=[0];
+    for(let i=2;i<k.length;i+=2) cum.push(cum[cum.length-1]+Math.hypot(k[i]-k[i-2],k[i+1]-k[i-1]));
+    nett.lenker.push({n:l.n||"Ukjent bane",f:l.f,t:l.t,k,cum,lengde:cum[cum.length-1]});
+    for(let i=0;i+3<k.length;i+=2){
+      const x0=Math.floor(Math.min(k[i],k[i+2])/JB_CELLE), x1=Math.floor(Math.max(k[i],k[i+2])/JB_CELLE);
+      const y0=Math.floor(Math.min(k[i+1],k[i+3])/JB_CELLE), y1=Math.floor(Math.max(k[i+1],k[i+3])/JB_CELLE);
+      for(let x=x0;x<=x1;x++) for(let y=y0;y<=y1;y++){ const n=x+"_"+y; if(!nett.rute.has(n)) nett.rute.set(n,[]); nett.rute.get(n).push(li,i/2); }
+    }
+  });
+  return nett;
+}
+async function hentJernbane(punkter){
+  if(JERNBANE&&JERNBANE.full) return JERNBANE;
   try{
-    const kat=await hent(`${NVDB}/datakatalog/api/v1/vegobjekttyper/540?inkluder=egenskapstyper`);
-    const e=((kat&&kat.egenskapstyper)||[]).find(x=>/ådt/i.test(x.navn||"")&&/total/i.test(x.navn||""));
-    if(e) egid=e.id;
-  }catch(e){/* standardverdi */}
-  const n=Math.min(topp,rader.length);
+    const r=await fetch(JB_FIL,{cache:"no-cache"});
+    if(r.ok){ const d=await r.json(); if(d.lenker&&d.lenker.length){ JERNBANE=byggJernbane(d.lenker,"fil",d.hentet); JERNBANE.full=true; return JERNBANE; } }
+  }catch(e){}
+  const m=1000, xs=punkter.map(p=>p.ost), ys=punkter.map(p=>p.nord);
+  const bb=[Math.min(...xs)-m,Math.min(...ys)-m,Math.max(...xs)+m,Math.max(...ys)+m].map(Math.round);
+  if(JERNBANE&&JERNBANE.bb&&JERNBANE.bb[0]<=bb[0]&&JERNBANE.bb[1]<=bb[1]&&JERNBANE.bb[2]>=bb[2]&&JERNBANE.bb[3]>=bb[3]) return JERNBANE;
+  let r;
+  try{ r=await fetch(`${JB_WFS}&bbox=${bb.join(",")},urn:ogc:def:crs:EPSG::25833`); }catch(e){ throw new Error("jernbane"); }
+  if(!r.ok) throw new Error("jernbane");
+  const lenker=lesBanelenker(await r.text());
+  if(!lenker.length) throw new Error("jernbane");
+  JERNBANE=byggJernbane(lenker,"wfs",new Date().toISOString().slice(0,10)); JERNBANE.bb=bb;
+  return JERNBANE;
+}
+function knyttTilBane(nett,p,maks){
+  const cx=Math.floor(p.ost/JB_CELLE), cy=Math.floor(p.nord/JB_CELLE), r=Math.ceil(maks/JB_CELLE);
+  let best=null, sett=new Set();
+  for(let x=cx-r;x<=cx+r;x++) for(let y=cy-r;y<=cy+r;y++){
+    const liste=nett.rute.get(x+"_"+y); if(!liste) continue;
+    for(let i=0;i<liste.length;i+=2){
+      const li=liste[i], si=liste[i+1], nk=li+":"+si; if(sett.has(nk)) continue; sett.add(nk);
+      const k=nett.lenker[li].k, ax=k[si*2], ay=k[si*2+1], bx=k[si*2+2], by=k[si*2+3], dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy;
+      const t=L2?Math.max(0,Math.min(1,((p.ost-ax)*dx+(p.nord-ay)*dy)/L2)):0;
+      const d=Math.hypot(p.ost-ax-t*dx,p.nord-ay-t*dy);
+      if(d<=maks&&(!best||d<best.avstand)) best={li,si,t,avstand:d};
+    }
+  }
+  if(!best) return null;
+  const l=nett.lenker[best.li], s=l.cum[best.si]+best.t*(l.cum[best.si+1]-l.cum[best.si]);
+  const km=(l.f!=null&&l.t!=null&&l.lengde>0)?l.f+(l.t-l.f)*s/l.lengde:s/1000;
+  return {navn:l.n, km, avstand:best.avstand};
+}
+const kmTekst=m=>(m/1000).toLocaleString("nb-NO",{minimumFractionDigits:m%1000?1:0,maximumFractionDigits:2});
+function aggregerTog(nett,punkter,bin,antallAar,maks){
+  const bins=new Map(); let ustedfestet=0;
+  for(const p of punkter){
+    const b0=knyttTilBane(nett,p,maks);
+    if(!b0){ ustedfestet++; continue; }
+    const b=Math.floor(b0.km*1000/bin), n=b0.navn+"|"+b;
+    if(!bins.has(n)) bins.set(n,{navn:b0.navn,b,antall:0,arter:new Map(),aar:new Map(),mnd:new Array(12).fill(0),ost:[],nord:[],avstander:[],kommuner:new Map()});
+    const s=bins.get(n);
+    s.antall++; s.arter.set(p.art,(s.arter.get(p.art)||0)+1);
+    if(p.aar) s.aar.set(p.aar,(s.aar.get(p.aar)||0)+1);
+    if(p.mnd) s.mnd[p.mnd-1]++;
+    if(p.kommune) s.kommuner.set(p.kommune,(s.kommuner.get(p.kommune)||0)+1);
+    s.ost.push(p.ost); s.nord.push(p.nord); s.avstander.push(b0.avstand);
+  }
+  const snitt=a=>a.reduce((x,y)=>x+y,0)/a.length, rader=[];
+  for(const s of bins.values()){
+    const mFra=s.b*bin, mTil=(s.b+1)*bin, aar=antallAar||s.aar.size||1;
+    const avst=s.avstander.slice().sort((a,b)=>a-b), [la,lo]=tilWgs84(snitt(s.ost),snitt(s.nord));
+    const topp=Math.max(...s.mnd), ti=s.mnd.indexOf(topp), ref=`${s.navn} km ${kmTekst(mFra)}–${kmTekst(mTil)}`;
+    rader.push({vegsystemreferanse:ref, sok:ref, veg:"Jernbane", vegkategori:"J", meter_fra:mFra, meter_til:mTil,
+      kommune:s.kommuner.size?[...s.kommuner.entries()].sort((a,b)=>b[1]-a[1])[0][0]:null,
+      antall:s.antall, per_km_per_aar:+(s.antall/(bin/1000)/aar).toFixed(2), adt:null, per_mill_kjt_km:null,
+      arter:[...s.arter.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${v}`).join(", "),
+      per_aar:[...s.aar.entries()].sort((a,b)=>a[0]-b[0]).map(([k,v])=>`${k}: ${v}`).join(", "),
+      per_maaned:s.mnd.join(","), verste_maaned:topp>0?MND[ti]:null, aar_dekket:antallAar||s.aar.size||null,
+      median_avstand_veg_m:+avst[Math.floor(avst.length/2)].toFixed(1), lat:+la.toFixed(6), lon:+lo.toFixed(6)});
+  }
+  return {rader, ustedfestet};
+}
+/* ══ Veidata fra NVDB ══ */
+const VEIDATA={
+  adt:{id:540,navn:"Trafikkmengde (ÅDT)",kol:[["adt","ÅDT",1],["per_mill_kjt_km","Per mill. kjøretøykm",1]]},
+  fartsgrense:{id:105,navn:"Fartsgrense",kol:[["fartsgrense","Fartsgrense",1]]},
+  skiltet_viltfare:{id:291,navn:"Skiltet viltfare",kol:[["skiltet_viltfare","Skiltet viltfare",0]]},
+  viltgjerde:{id:7,navn:"Viltgjerde",kol:[["viltgjerde","Viltgjerde",0]]},
+  belysning:{id:86,navn:"Veibelysning",kol:[["belysning","Belysning",0]]}
+};
+function tolkVeidata(nokkel,svar,r,bin){
+  const obj=(svar&&svar.objekter)||[];
+  const verdier=re=>{ const ut=[]; for(const o of obj) for(const e of o.egenskaper||[]) if(re.test(e.navn||"")&&e.verdi!=null) ut.push(e.verdi); return ut; };
+  if(nokkel==="adt"){
+    const v=verdier(/^ådt.*total/i).map(x=>parseInt(x,10)).filter(isFinite);
+    r.adt=v.length?Math.max(...v):null;
+    r.per_mill_kjt_km=r.adt?+(r.antall/((r.adt*365*(bin/1000)/1e6)*(r.aar_dekket||1))).toFixed(2):null;
+  } else if(nokkel==="fartsgrense"){
+    const v=[...new Set(verdier(/^fartsgrense$/i).map(Number).filter(isFinite))].sort((a,b)=>a-b);
+    r.fartsgrense=v.length?v[v.length-1]:null; r.fartsgrenser=v.length>1?v.join(" og "):null;
+  } else if(nokkel==="skiltet_viltfare") r.skiltet_viltfare=obj.length?"Ja":"Nei";
+  else if(nokkel==="viltgjerde") r.viltgjerde=verdier(/^bruksområde$/i).some(x=>/viltgjerde/i.test(String(x)))?"Ja":"Nei";
+  else if(nokkel==="belysning") r.belysning=obj.length?"Ja":"Nei";
+}
+async function hentVeidata(rader,topp,bin,valgte,framdrift){
+  const n=Math.min(topp,rader.length); let feil=0;
   for(let i=0;i<n;i++){
     if(avbryt) break;
     const r=rader[i];
-    try{
-      const svar=await hent(`${NVDB}/vegobjekter/api/v4/vegobjekter/540`
-        +`?vegsystemreferanse=${encodeURIComponent(r.sok)}&inkluder=egenskaper&segmentering=true`);
-      let adt=null;
-      for(const o of (svar&&svar.objekter)||[])
-        for(const e of o.egenskaper||[])
-          if(e.id===egid&&e.verdi!=null) adt=Math.max(adt||0,parseInt(e.verdi,10));
-      r.adt=adt;
-      if(adt){
-        const aar=r.aar_dekket||1;
-        r.per_mill_kjt_km=+(r.antall/((adt*365*(bin/1000)/1e6)*aar)).toFixed(2);
-      }
-    }catch(e){ if(e.message==="avbrutt") break; }
+    await Promise.all(valgte.map(async k=>{
+      try{
+        const svar=await hent(`${NVDB}/vegobjekter/api/v4/vegobjekter/${VEIDATA[k].id}`
+          +`?vegsystemreferanse=${encodeURIComponent(r.sok)}&inkluder=egenskaper&segmentering=true`);
+        if(svar) tolkVeidata(k,svar,r,bin); else feil++;
+      }catch(e){ if(e.message!=="avbrutt") feil++; }
+    }));
     framdrift(i+1,n);
   }
-  return rader;
+  return feil;
+}
+
+/* ══ Tilstand ══ */
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const tallf=n=>Number(n).toLocaleString("nb-NO");
+const ARTFARGE={"Elg":"#0072B2","Rådyr":"#E69F00","Hjort":"#009E73","Villrein":"#CC79A7"};
+const artFarge=a=>ARTFARGE[a]||"#7A7A7A";
+const ARSAKNAVN={bil:"Påkjørt av bil",tog:"Påkjørt av tog",annet:"Andre årsaker",ukjent:"Årsak ikke oppgitt"};
+const SKALA=["#F6E3C5","#F2B866","#F2860D","#B8500F","#6E2409"];
+let ALLE=null, UTVALG=[], RADER=null, META=null, FILTER=null, terskler=[1,2,4,8];
+let kart=null, flislag=null, punktlag=null, streklag=null, sorter={felt:"antall",ned:true};
+
+function nyttFilter(){
+  const sett=f=>new Set(ALLE.map(f));
+  const arsaker=sett(p=>p.arsak), aar=ALLE.map(p=>p.aar).filter(Boolean);
+  const valgt=new Set(["bil","tog","ukjent"].filter(a=>arsaker.has(a)));
+  if(!valgt.size) for(const a of arsaker) valgt.add(a);
+  return {arsak:valgt, art:sett(p=>p.art), utfall:sett(p=>p.utfall), kjonn:sett(p=>p.kjonn), alder:sett(p=>p.alder), fylke:"", kommune:"",
+    aarFra:aar.length?Math.min(...aar):null, aarTil:aar.length?Math.max(...aar):null,
+    mnd:new Set([1,2,3,4,5,6,7,8,9,10,11,12])};
+}
+function passer(p,uten){
+  const f=FILTER;
+  if(uten!=="arsak"&&!f.arsak.has(p.arsak)) return false;
+  if(uten!=="art"&&!f.art.has(p.art)) return false;
+  if(uten!=="utfall"&&!f.utfall.has(p.utfall)) return false;
+  if(uten!=="kjonn"&&!f.kjonn.has(p.kjonn)) return false;
+  if(uten!=="alder"&&!f.alder.has(p.alder)) return false;
+  if(uten!=="omraade"){ if(f.kommune){ if((p.knr||p.kommune)!==f.kommune) return false; } else if(f.fylke&&p.knr.slice(0,2)!==f.fylke) return false; }
+  if(uten!=="aar"&&f.aarFra!==null&&p.aar&&(p.aar<f.aarFra||p.aar>f.aarTil)) return false;
+  if(uten!=="mnd"&&f.mnd.size<12&&!(p.mnd&&f.mnd.has(p.mnd))) return false;
+  return true;
+}
+function tell(liste,f){ const m=new Map(); for(const p of liste){ const k=f(p); m.set(k,(m.get(k)||0)+1); } return m; }
+
+/* ══ Filterpanel ══ */
+function chips(boks,verdier,valgt,navn,farge,vedEndring){
+  boks.innerHTML="";
+  for(const [v,n] of verdier){
+    const l=document.createElement("label"); l.className="chip";
+    l.innerHTML=`<input type="checkbox"${valgt.has(v)?" checked":""}><span>${farge?`<i style="background:${farge(v)}"></i>`:""}${esc(navn(v))} <small>${tallf(n)}</small></span>`;
+    l.firstChild.addEventListener("change",e=>{ e.target.checked?valgt.add(v):valgt.delete(v); vedEndring(); });
+    boks.appendChild(l);
+  }
+}
+function byggFilter(){
+  const sorterte=m=>[...m.entries()].sort((a,b)=>b[1]-a[1]);
+  const ars=sorterte(tell(ALLE.filter(p=>passer(p,"arsak")),p=>p.arsak));
+  for(const a of new Set(ALLE.map(p=>p.arsak))) if(!ars.some(x=>x[0]===a)) ars.push([a,0]);
+  chips($("cArsak"),ars,FILTER.arsak,v=>ARSAKNAVN[v],null,oppdater);
+  $("fArsak").classList.toggle("skjult",ars.length<2);
+  const art=sorterte(tell(ALLE.filter(p=>passer(p,"art")),p=>p.art));
+  for(const a of new Set(ALLE.map(p=>p.art))) if(!art.some(x=>x[0]===a)) art.push([a,0]);
+  chips($("cArt"),art,FILTER.art,v=>v,artFarge,oppdater);
+  const utf=sorterte(tell(ALLE.filter(p=>passer(p,"utfall")),p=>p.utfall));
+  for(const a of new Set(ALLE.map(p=>p.utfall))) if(!utf.some(x=>x[0]===a)) utf.push([a,0]);
+  chips($("cUtfall"),utf,FILTER.utfall,v=>v||"Ikke oppgitt",null,oppdater);
+  $("fUtfall").classList.toggle("skjult",utf.length<2);
+  let flere=false;
+  for(const [felt,boks] of [["kjonn","cKjonn"],["alder","cAlder"]]){
+    const v=sorterte(tell(ALLE.filter(p=>passer(p,felt)),p=>p[felt]));
+    for(const a of new Set(ALLE.map(p=>p[felt]))) if(!v.some(x=>x[0]===a)) v.push([a,0]);
+    chips($(boks),v,FILTER[felt],x=>x||"Ikke oppgitt",null,oppdater);
+    $(boks).parentNode.classList.toggle("skjult",v.length<2); if(v.length>=2) flere=true;
+  }
+  $("flereValg").classList.toggle("skjult",!flere);
+  const mt=tell(ALLE.filter(p=>passer(p,"mnd")),p=>p.mnd);
+  chips($("cMnd"),MND.map((_,i)=>[i+1,mt.get(i+1)||0]),FILTER.mnd,v=>MND[v-1],null,oppdater);
+  $("fMnd").classList.toggle("skjult",!ALLE.some(p=>p.mnd));
+}
+function byggOmraade(){
+  const fy=tell(ALLE.filter(p=>p.knr),p=>p.knr.slice(0,2));
+  $("fylke").innerHTML='<option value="">Hele landet</option>'+[...fy.keys()].sort((a,b)=>(FYLKER[a]||a).localeCompare(FYLKER[b]||b,"nb"))
+    .map(k=>`<option value="${k}"${FILTER.fylke===k?" selected":""}>${esc(FYLKER[k]||"Fylke "+k)} (${tallf(fy.get(k))})</option>`).join("");
+  const kom=new Map();
+  for(const p of ALLE){ const k=p.knr||p.kommune; if(!k||(FILTER.fylke&&p.knr.slice(0,2)!==FILTER.fylke)) continue;
+    const x=kom.get(k)||{navn:p.kommune,n:0}; x.n++; kom.set(k,x); }
+  $("kommune").innerHTML='<option value="">Alle kommuner</option>'+[...kom.entries()].sort((a,b)=>a[1].navn.localeCompare(b[1].navn,"nb"))
+    .map(([k,x])=>`<option value="${esc(k)}"${FILTER.kommune===k?" selected":""}>${esc(x.navn)} (${tallf(x.n)})</option>`).join("");
+  $("fylkefelt").classList.toggle("skjult",fy.size<2);
+  $("fOmraade").classList.toggle("skjult",kom.size<2&&fy.size<2);
+}
+function byggAar(){
+  const aar=[...new Set(ALLE.map(p=>p.aar).filter(Boolean))].sort((a,b)=>a-b);
+  $("fAar").classList.toggle("skjult",aar.length<2);
+  for(const [id,v] of [["aarFra",FILTER.aarFra],["aarTil",FILTER.aarTil]])
+    $(id).innerHTML=aar.map(a=>`<option${a===v?" selected":""}>${a}</option>`).join("");
+}
+function oppdater(){
+  UTVALG=ALLE.filter(p=>passer(p));
+  $("utvalgtall").textContent=`${tallf(UTVALG.length)} av ${tallf(ALLE.length)}`;
+  byggFilter(); tegnStatistikk(); tegnPunkter(false);
+  const bil=UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet").length, tog=UTVALG.filter(p=>p.arsak==="tog").length;
+  $("togmerknad").textContent=[bil?`${tallf(bil)} påkjørsler med bil blir knyttet til veinettet.`:"",
+    tog?`${tallf(tog)} påkjørsler med tog blir knyttet til jernbanenettet fra Bane NOR.`:"",
+    !bil&&!tog?"Utvalget har ingen påkjørsler med bil eller tog.":""].filter(Boolean).join(" ");
+  if(bil){ const g=new Set(); for(const p of UTVALG) if(p.arsak!=="tog"&&p.arsak!=="annet") g.add(Math.round(p.ost/20)+"_"+Math.round(p.nord/20));
+    const min=Math.ceil(g.size/5*0.35/60);
+    $("togmerknad").textContent+=` Det gir om lag ${tallf(g.size)} oppslag`+(min>=2?`, som kan ta rundt ${tallf(min)} minutter. Velg et fylke eller en kommune for å gå raskere.`:"."); }
+  $("kjor").disabled=!bil&&!tog;
+  if(RADER) $("utdatert").classList.remove("skjult");
+  if($("lag").value==="punkter") visTegnPunkter();
+}
+
+/* ══ Statistikk ══ */
+function soyler(id,verdier,etiketter,hverN){
+  const boks=$(id), maks=Math.max(1,...verdier);
+  boks.classList.toggle("skjult",!verdier.some(v=>v>0));
+  boks.querySelector(".soyler").innerHTML=verdier.map((v,i)=>
+    `<div class="${v===maks&&v>0?"topp":""}" style="height:${Math.max(1,v/maks*100)}%" title="${esc(etiketter[i])}: ${tallf(v)}"></div>`).join("");
+  boks.querySelector(".akse").innerHTML=etiketter.map((e,i)=>`<span>${i%hverN===0?esc(e):""}</span>`).join("");
+  boks.querySelector(".soyler").setAttribute("role","img");
+  boks.querySelector(".soyler").setAttribute("aria-label",etiketter.map((e,i)=>`${e}: ${verdier[i]}`).join(", "));
+}
+function linjer(id,m,navn){
+  const boks=$(id), rader=[...m.entries()].sort((a,b)=>b[1]-a[1]), maks=Math.max(1,...rader.map(r=>r[1]));
+  boks.classList.toggle("skjult",rader.length<2);
+  boks.querySelector(".linjer").innerHTML=rader.map(([k,v])=>
+    `<span>${esc(navn(k))}</span><span class="b" style="width:${v/maks*100}%"></span><span class="n">${tallf(v)}</span>`).join("");
+}
+function tegnStatistikk(){
+  const aar=[...new Set(UTVALG.map(p=>p.aar).filter(Boolean))].sort((a,b)=>a-b);
+  const ta=tell(UTVALG,p=>p.aar), tm=tell(UTVALG,p=>p.mnd), tt=tell(UTVALG,p=>p.time);
+  soyler("stAar",aar.map(a=>ta.get(a)||0),aar.map(String),Math.ceil(aar.length/8)||1);
+  $("stAar").classList.toggle("skjult",aar.length<2);
+  soyler("stMnd",MND.map((_,i)=>tm.get(i+1)||0),MND,1);
+  soyler("stTime",Array.from({length:24},(_,i)=>tt.get(i)||0),Array.from({length:24},(_,i)=>String(i).padStart(2,"0")),3);
+  linjer("stArt",tell(UTVALG,p=>p.art),v=>v);
+  linjer("stUtfall",tell(UTVALG,p=>p.utfall),v=>v||"Ikke oppgitt");
 }
 
 /* ══ Kart ══ */
-const SKALA=["#efe7d2","#e0bf82","#d08b3c","#b0532a","#7d2418"];
-const $=id=>document.getElementById(id);
-let kart=null, flislag=null, punktlag=null, streklag=null;
-let PUNKTER=null, RADER=null, META=null, terskler=[1,2,4,8];
-
 function lagKart(){
   if(kart) return;
-  kart=L.map("kart",{preferCanvas:true, zoomControl:true, attributionControl:true})
-       .setView([64.5,13],5);
-  settBakgrunn($("bakgrunn").value);
+  kart=L.map("kart",{preferCanvas:true}).setView([64.5,13],5);
   kart.attributionControl.setPrefix("");
+  settBakgrunn($("bakgrunn").value);
 }
 function settBakgrunn(lag){
   if(flislag) kart.removeLayer(flislag);
-  flislag=L.tileLayer(
-    `https://cache.kartverket.no/v1/wmts/1.0.0/${lag}/default/webmercator/{z}/{y}/{x}.png`,
+  flislag=L.tileLayer(`https://cache.kartverket.no/v1/wmts/1.0.0/${lag}/default/webmercator/{z}/{y}/{x}.png`,
     {maxZoom:18, attribution:"© Kartverket"}).addTo(kart);
   flislag.bringToBack();
 }
-function tegnPunkter(){
-  if(punktlag) kart.removeLayer(punktlag);
-  const m=[];
-  for(const p of PUNKTER){
-    m.push(L.circleMarker([p.lat,p.lon],{radius:4,weight:1,color:"#141210",
-      fillColor:"#b0532a",fillOpacity:.8}).bindPopup(
-      `<div class="pop"><h3>${p.art||"Ukjent art"}</h3>
-       <table><tr><td>Dato</td><td>${p.dato||"—"}</td></tr>
-       <tr><td>Kommune</td><td>${p.kommune||"—"}</td></tr>
-       <tr><td>Koordinat</td><td>${p.lat}, ${p.lon}</td></tr></table></div>`));
-  }
-  punktlag=L.layerGroup(m).addTo(kart);
-  if(m.length) kart.fitBounds(L.latLngBounds(PUNKTER.map(p=>[p.lat,p.lon])),{padding:[24,24]});
-  $("tegntekst").innerHTML="<b>Enkeltpåkjørsler</b><br>"+PUNKTER.length+" registreringer";
+function visTegnPunkter(){
+  const arter=[...tell(UTVALG,p=>p.art).entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
+  $("tegn").innerHTML=`<b>${tallf(UTVALG.length)} påkjørsler</b>`+arter.map(([a,n])=>
+    `<div class="rad"><i style="background:${artFarge(a)}"></i>${esc(a)} (${tallf(n)})</div>`).join("");
 }
-function farge(v){
-  for(let i=0;i<terskler.length;i++) if(v<terskler[i]) return SKALA[i];
-  return SKALA[4];
+function punktPopup(p){
+  return `<div class="pop"><h3>${esc(p.art)}</h3><table>
+       <tr><td>Dato</td><td>${esc(p.dato||"–")}</td></tr>
+       <tr><td>Årsak</td><td>${esc(p.arsakTekst||ARSAKNAVN[p.arsak])}</td></tr>
+       ${p.utfall?`<tr><td>Utfall</td><td>${esc(p.utfall)}</td></tr>`:""}
+       ${p.kjonn||p.alder?`<tr><td>Kjønn og alder</td><td>${esc([p.kjonn,p.alder].filter(Boolean).join(", "))}</td></tr>`:""}
+       <tr><td>Sted</td><td>${esc([p.sted,p.kommune].filter(Boolean).join(", ")||"–")}</td></tr>
+       ${p.id?`<tr><td>Fallvilt-ID</td><td>${esc(p.id)}</td></tr>`:""}
+       <tr><td>Koordinat</td><td>${p.lat}, ${p.lon}</td></tr></table></div>`;
+}
+const RUTE=76, LOS_OPP=15;
+function tegnKlynger(){
+  if(!kart||!punktlag) return;
+  punktlag.clearLayers();
+  if($("lag").value!=="punkter") return;
+  const z=kart.getZoom(), b=kart.getBounds().pad(.25), ruter=new Map();
+  for(const p of UTVALG){
+    if(!b.contains([p.lat,p.lon])) continue;
+    const px=kart.project([p.lat,p.lon],z), n=Math.floor(px.x/RUTE)+"_"+Math.floor(px.y/RUTE);
+    let r=ruter.get(n); if(!r){ r={liste:[],lat:0,lon:0}; ruter.set(n,r); }
+    r.liste.push(p); r.lat+=p.lat; r.lon+=p.lon;
+  }
+  for(const r of ruter.values()){
+    const n=r.liste.length;
+    if(n===1||z>=LOS_OPP||(z>=13&&n<=3)){
+      for(const p of r.liste) L.circleMarker([p.lat,p.lon],{radius:6,weight:1.5,color:"#fff",
+        fillColor:artFarge(p.art),fillOpacity:.95}).bindPopup(()=>punktPopup(p)).addTo(punktlag);
+    } else {
+      const st=n<10?30:n<100?36:n<1000?42:50;
+      const m=L.marker([r.lat/n,r.lon/n],{keyboard:true,title:`${tallf(n)} påkjørsler. Trykk for å zoome inn.`,
+        icon:L.divIcon({className:"",iconSize:[st,st],html:`<div class="klynge" style="width:${st}px;height:${st}px">${tallf(n)}</div>`})});
+      m.on("click",()=>kart.fitBounds(L.latLngBounds(r.liste.map(p=>[p.lat,p.lon])),{padding:[40,40],maxZoom:LOS_OPP}));
+      m.addTo(punktlag);
+    }
+  }
+}
+function tegnPunkter(zoom){
+  if(!kart) return;
+  if(!punktlag){ punktlag=L.layerGroup(); kart.on("moveend",tegnKlynger); }
+  if($("lag").value==="punkter"&&!kart.hasLayer(punktlag)) punktlag.addTo(kart);
+  if(zoom&&UTVALG.length) kart.fitBounds(L.latLngBounds(UTVALG.map(p=>[p.lat,p.lon])),{padding:[30,30],animate:false});
+  tegnKlynger();
+}
+function farge(v){ for(let i=0;i<terskler.length;i++) if(v<terskler[i]) return SKALA[i]; return SKALA[4]; }
+function strekPopup(r){
+  const mnd=(r.per_maaned||"").split(",").map(Number), mm=Math.max(1,...mnd);
+  const rad=(a,b)=>`<tr><td>${a}</td><td>${b}</td></tr>`;
+  return `<div class="pop"><h3>${esc(r.vegsystemreferanse)}</h3><table>
+    ${rad("Kommune",esc(r.kommune??"–"))}${rad("Påkjørsler",tallf(r.antall))}${rad("Per km per år",tallf(r.per_km_per_aar))}
+    ${rad("Arter",esc(r.arter||"–"))}${rad("Per år",esc(r.per_aar||"–"))}
+    ${r.adt!=null?rad("Trafikk (ÅDT)",tallf(r.adt))+rad("Per mill. kjøretøykm",r.per_mill_kjt_km!=null?tallf(r.per_mill_kjt_km):"–"):""}
+    ${r.fartsgrense!=null?rad("Fartsgrense",(r.fartsgrenser||r.fartsgrense)+" km/t"):""}${r.skiltet_viltfare?rad("Skiltet viltfare",r.skiltet_viltfare):""}
+    ${r.viltgjerde?rad("Viltgjerde",r.viltgjerde):""}${r.belysning?rad("Veibelysning",r.belysning):""}
+    ${rad(r.vegkategori==="J"?"Avstand til bane":"Avstand til vei",r.median_avstand_veg_m!=null?tallf(r.median_avstand_veg_m)+" m":"–")}</table>
+    ${mnd.some(v=>v>0)?`<div class="mini" role="img" aria-label="Fordeling per måned">${mnd.map((v,i)=>`<i style="height:${Math.max(3,v/mm*100)}%" title="${MND[i]}: ${v}"></i>`).join("")}</div><div style="font-size:11px;color:#46617F;display:flex;justify-content:space-between"><span>jan</span><span>des</span></div>`:""}
+    <div style="margin-top:6px"><a href="https://norgeskart.no/#!?project=norgeskart&layers=1002&zoom=15&lat=${r.lat}&lon=${r.lon}" target="_blank" rel="noopener">Norgeskart</a> ·
+    <a href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}" target="_blank" rel="noopener">Google Maps</a></div></div>`;
 }
 function tegnStrekninger(){
   if(streklag) kart.removeLayer(streklag);
   const maks=Math.max(...RADER.map(r=>r.antall));
   terskler=[2,Math.max(3,maks*.15),Math.max(4,maks*.35),Math.max(5,maks*.65)];
-  const m=RADER.map(r=>L.circleMarker([r.lat,r.lon],{
-      radius:Math.min(22,5+Math.sqrt(r.antall)*3), weight:1.4, color:"#141210",
-      fillColor:farge(r.antall), fillOpacity:.85})
-    .bindPopup(`<div class="pop"><h3>${r.vegsystemreferanse}</h3><table>
-      <tr><td>Påkjørsler</td><td>${r.antall}</td></tr>
-      <tr><td>Per km per år</td><td>${r.per_km_per_aar}</td></tr>
-      <tr><td>Arter</td><td>${r.arter||"—"}</td></tr>
-      <tr><td>Per år</td><td>${r.per_aar||"—"}</td></tr>
-      <tr><td>Verste måned</td><td>${r.verste_maaned||"—"}</td></tr>
-      <tr><td>ÅDT</td><td>${r.adt??"—"}</td></tr>
-      <tr><td>Per mill. kjt.km</td><td>${r.per_mill_kjt_km??"—"}</td></tr>
-      <tr><td>Median avstand til veg</td><td>${r.median_avstand_veg_m??"—"} m</td></tr>
-      <tr><td>Kommunenr.</td><td>${r.kommune??"—"}</td></tr></table>
-      <div style="margin-top:5px"><a href="https://norgeskart.no/#!?project=norgeskart&layers=1002&zoom=15&lat=${r.lat}&lon=${r.lon}" target="_blank" rel="noopener">Norgeskart</a> ·
-      <a href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}" target="_blank" rel="noopener">Google Maps</a></div></div>`));
-  streklag=L.layerGroup(m);
-  const t=[0,...terskler].map(x=>Math.round(x));
-  $("tegntekst").innerHTML="<b>Påkjørsler per strekning</b>"
-    +'<div class="skala">'+SKALA.map(c=>`<i style="background:${c}"></i>`).join("")+"</div>"
-    +'<div class="tall"><span>'+t[0]+"</span><span>"+t[4]+"+</span></div>";
-  return m;
+  streklag=L.layerGroup(RADER.map(r=>{ const m=L.circleMarker([r.lat,r.lon],{
+      radius:Math.min(22,5+Math.sqrt(r.antall)*3), weight:1.2, color:"#0E1B2A",
+      fillColor:farge(r.antall), fillOpacity:.88}).bindPopup(()=>strekPopup(r),{maxWidth:320}); r._m=m; return m; }));
 }
 function velgLag(){
-  const v=$("lag").value;
-  if(v==="punkter"){ if(streklag) kart.removeLayer(streklag);
-    if(punktlag) punktlag.addTo(kart); else tegnPunkter();
-    $("tegntekst").innerHTML="<b>Enkeltpåkjørsler</b><br>"+PUNKTER.length+" registreringer";
-    $("karttittel").textContent=PUNKTER.length+" PUNKTER";
+  if(!kart) return;
+  if($("lag").value==="punkter"){
+    if(streklag) kart.removeLayer(streklag);
+    if(punktlag) punktlag.addTo(kart);
+    tegnKlynger(); visTegnPunkter();
   } else {
     if(punktlag) kart.removeLayer(punktlag);
     if(!streklag) tegnStrekninger();
     streklag.addTo(kart);
-    $("karttittel").textContent=RADER.length+" STREKNINGER";
+    const t=[0,...terskler].map(x=>Math.round(x));
+    $("tegn").innerHTML="<b>Påkjørsler per strekning</b>"
+      +'<div class="skala">'+SKALA.map(c=>`<i style="background:${c}"></i>`).join("")+"</div>"
+      +`<div class="tall"><span>${t[0]}</span><span>${t[4]}+</span></div>`;
   }
 }
 
-/* ══ Hendelser ══ */
-$("fil").addEventListener("change",async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  const kv=$("filkvittering"); kv.classList.remove("skjult"); kv.textContent="Leser fila …";
+/* ══ Innlesing ══ */
+function visData(zoom){
+  for(const id of ["s2","s3","s4","kartverktoy","tegn"]) $(id).classList.remove("skjult");
+  $("karttomt").classList.add("skjult");
+  lagKart(); byggAar(); byggOmraade();
+  setTimeout(()=>{ kart.invalidateSize(); oppdater(); $("utdatert").classList.add("skjult"); tegnPunkter(zoom);
+    if(RADER){ $("lag").options[1].disabled=false; visStrekninger(); } },50);
+}
+async function lesFil(f){
+  const kv=$("filkvitt"); kv.className="kvitt"; kv.textContent="Leser fila …";
   try{
-    const {hoder,rader}=parseCsv(await f.text());
-    const kart2=finnKolonner(hoder);
-    if((kart2.lat===null||kart2.lon===null)&&(kart2.nord===null||kart2.ost===null)){
-      kv.textContent="Fant ingen koordinatkolonner. Kolonner i fila:\n"
-        +hoder.map(h=>"  · "+h).join("\n");
+    const navn=f.name.toLowerCase();
+    if(navn.endsWith(".json")){
+      const d=JSON.parse(await f.text());
+      if(!d||d.format!=="veivakt-viltkart"||!Array.isArray(d.punkter)) throw new Error("Dette er ikke et lagret prosjekt fra verktøyet.");
+      ALLE=d.punkter; FILTER=nyttFilter();
+      if(d.filter){ for(const k of ["arsak","art","utfall","mnd","kjonn","alder"]) if(d.filter[k]) FILTER[k]=new Set(d.filter[k]);
+        FILTER.fylke=d.filter.fylke||""; FILTER.kommune=d.filter.kommune||"";
+        FILTER.aarFra=d.filter.aarFra??FILTER.aarFra; FILTER.aarTil=d.filter.aarTil??FILTER.aarTil; }
+      RADER=d.rader||null; META=d.meta||{}; streklag=null;
+      kv.textContent=`Åpnet prosjektet «${f.name}» med ${tallf(ALLE.length)} registreringer`+(RADER?` og ${tallf(RADER.length)} strekninger.`:".");
+      visData(true); return;
+    }
+    const data=navn.endsWith(".xlsx")?await parseXlsx(await f.arrayBuffer()):parseCsv(await f.text());
+    if(navn.endsWith(".xls")) throw new Error("Gamle Excel-filer (.xls) kan ikke leses. Lagre fila som .xlsx eller CSV.");
+    const kol=finnKolonner(data.hoder);
+    if((kol.lat===null||kol.lon===null)&&(kol.nord===null||kol.ost===null)){
+      kv.className="kvitt feil";
+      kv.textContent="Fant ingen kolonner med koordinater. Fila har disse kolonnene:\n"+data.hoder.map(h=>"· "+h).join("\n");
       return;
     }
-    const {punkter,forkastet}=lesPunkter(rader,kart2,$("tog").checked);
-    if(!punkter.length){ kv.textContent="Ingen påkjørsler med gyldig koordinat i fila."; return; }
-    PUNKTER=punkter; RADER=null; streklag=null;
-    META={inn:rader.length, etterFilter:punkter.length, forkastet};
-    const f2=Object.entries(forkastet).map(([k,v])=>`${k} ${v}`).join(", ");
-    kv.textContent=`${rader.length} rader lest · ${punkter.length} påkjørsler kartfestet`
-      +(f2?`\nForkastet: ${f2}`:"");
-    $("kartseksjon").classList.remove("skjult");
-    $("vegseksjon").classList.remove("skjult");
-    $("resultatseksjon").classList.add("skjult");
-    $("lag").value="punkter";
-    $("lag").options[1].disabled=true;
-    lagKart();
-    setTimeout(()=>{ kart.invalidateSize(); tegnPunkter();
-      $("karttittel").textContent=punkter.length+" PUNKTER"; },60);
-  }catch(err){ kv.textContent="Klarte ikke å lese fila: "+err.message; }
-});
+    const {punkter,forkastet}=lesPunkter(data.rader,kol,!!data.excel);
+    if(!punkter.length){ kv.className="kvitt feil"; kv.textContent="Fant ingen registreringer med gyldig koordinat i fila."; return; }
+    ALLE=punkter; FILTER=nyttFilter(); RADER=null; streklag=null; META={fil:f.name};
+    $("s5").classList.add("skjult"); $("lag").value="punkter"; $("lag").options[1].disabled=true;
+    const fk=Object.entries(forkastet).map(([k,v])=>`${tallf(v)} ${k}`).join(", ");
+    const mangler=[]; if(kol.arsak===null) mangler.push("årsak"); if(kol.dato===null) mangler.push("dato"); if(kol.art===null) mangler.push("art");
+    kv.textContent=`Leste ${tallf(data.rader.length)} rader fra «${f.name}». ${tallf(punkter.length)} har gyldig koordinat.`
+      +(fk?`\nHoldt utenfor: ${fk}.`:"")+(mangler.length?`\nFant ikke kolonne for ${mangler.join(", ")}. Da kan du ikke velge ut etter dette.`:"");
+    visData(true);
+    $("s2").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(err){ kv.className="kvitt feil"; kv.textContent="Klarte ikke å lese fila. "+(err.message||""); }
+}
+const slipp=$("slipp");
+slipp.addEventListener("click",()=>$("fil").click());
+slipp.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); $("fil").click(); } });
+$("fil").addEventListener("change",e=>{ const f=e.target.files[0]; if(f) lesFil(f); e.target.value=""; });
+for(const h of ["dragenter","dragover"]) document.addEventListener(h,e=>{ e.preventDefault(); slipp.classList.add("over"); });
+for(const h of ["dragleave","drop"]) document.addEventListener(h,e=>{ e.preventDefault(); slipp.classList.remove("over"); });
+document.addEventListener("drop",e=>{ const f=e.dataTransfer&&e.dataTransfer.files[0]; if(f) lesFil(f); });
 
+$("aarFra").addEventListener("change",e=>{ FILTER.aarFra=+e.target.value; if(FILTER.aarTil<FILTER.aarFra){ FILTER.aarTil=FILTER.aarFra; byggAar(); } oppdater(); });
+$("aarTil").addEventListener("change",e=>{ FILTER.aarTil=+e.target.value; if(FILTER.aarFra>FILTER.aarTil){ FILTER.aarFra=FILTER.aarTil; byggAar(); } oppdater(); });
+$("mndAlle").addEventListener("click",()=>{ FILTER.mnd=new Set([1,2,3,4,5,6,7,8,9,10,11,12]); oppdater(); });
+$("mndIngen").addEventListener("click",()=>{ FILTER.mnd=new Set(); oppdater(); });
+$("nullstill").addEventListener("click",()=>{ FILTER=nyttFilter(); byggAar(); byggOmraade(); oppdater(); tegnPunkter(true); });
+$("fylke").addEventListener("change",e=>{ FILTER.fylke=e.target.value; FILTER.kommune=""; byggOmraade(); oppdater(); tegnPunkter(true); });
+$("kommune").addEventListener("change",e=>{ FILTER.kommune=e.target.value; oppdater(); tegnPunkter(true); });
 $("bakgrunn").addEventListener("change",e=>settBakgrunn(e.target.value));
 $("lag").addEventListener("change",velgLag);
 $("zoomut").addEventListener("click",()=>{
-  const kilde=$("lag").value==="strekninger"&&RADER?RADER:PUNKTER;
-  if(kilde&&kilde.length) kart.fitBounds(L.latLngBounds(kilde.map(r=>[r.lat,r.lon])),{padding:[24,24]});
+  const k=$("lag").value==="strekninger"&&RADER?RADER:UTVALG;
+  if(k&&k.length) kart.fitBounds(L.latLngBounds(k.map(r=>[r.lat,r.lon])),{padding:[30,30]});
 });
-$("stopp").addEventListener("click",()=>{avbryt=true; $("statustekst").textContent="Stopper …";});
 
+/* ══ Strekninger ══ */
+$("stopp").addEventListener("click",()=>{ avbryt=true; $("statustekst").textContent="Stopper …"; });
 $("kjor").addEventListener("click",async()=>{
-  if(!PUNKTER) return;
+  const veipunkter=UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet"), togpunkter=UTVALG.filter(p=>p.arsak==="tog");
+  if(!veipunkter.length&&!togpunkter.length) return;
   avbryt=false;
-  const bin=+$("bin").value||500, maksAvstand=+$("maksavstand").value||60;
-  const antallAar=+$("aar").value||0, toppAdt=+$("toppadt").value||0;
-  $("feilboks").classList.add("skjult");
-  $("fremdrift").classList.remove("skjult");
-  $("stopp").classList.remove("skjult");
-  $("kjor").disabled=true;
-  const sett=(t,n)=>{$("statustekst").textContent=t; $("statustall").textContent=n||"";};
+  const bin=+$("bin").value, maksAvstand=+$("maksavstand").value, toppAdt=+$("toppadt").value;
+  const valgte=[...document.querySelectorAll("#cVeidata input:checked")].map(e=>e.value);
+  const aar=new Set(veipunkter.map(p=>p.aar).filter(Boolean));
+  const antallAar=FILTER.aarFra!==null&&aar.size?FILTER.aarTil-FILTER.aarFra+1:0;
+  $("feilboks").classList.add("skjult"); $("fremdrift").classList.remove("skjult");
+  $("stopp").classList.remove("skjult"); $("kjor").disabled=true;
+  const sett=(t,n)=>{ $("statustekst").textContent=t; $("statustall").textContent=n||""; };
   const bar=$("bar");
   try{
-    const grp=grupper(PUNKTER);
-    bar.value=0; bar.max=grp.length;
-    sett("Kartfester mot vegnettet …",`0 / ${grp.length}`);
-    await snapAlle(grp,maksAvstand,(g,t)=>{bar.value=g; sett("Kartfester mot vegnettet …",`${g} / ${t}`);});
-    if(avbryt) throw new Error("avbrutt");
-    sett("Samler i strekninger …");
-    const {rader,ustedfestet}=aggreger(grp,bin,antallAar);
-    if(!rader.length) throw new Error(
-      `Ingen punkter traff vegnettet innenfor ${maksAvstand} m. Prøv å øke avstanden.`);
-    if(toppAdt>0){
-      bar.value=0; bar.max=Math.min(toppAdt,rader.length);
-      sett("Henter trafikkmengde …",`0 / ${bar.max}`);
-      await hentAdt(rader,toppAdt,bin,(g,t)=>{bar.value=g; sett("Henter trafikkmengde …",`${g} / ${t}`);});
+    const grp=grupper(veipunkter);
+    let rader=[], ustedfestet=0;
+    if(grp.length){
+      bar.value=0; bar.max=grp.length; sett("Knytter påkjørslene til veinettet …",`0 av ${tallf(grp.length)}`);
+      await snapAlle(grp,maksAvstand,(g,t)=>{ bar.value=g; sett("Knytter påkjørslene til veinettet …",`${tallf(g)} av ${tallf(t)}`); });
+      if(avbryt) throw new Error("avbrutt");
+      sett("Samler i strekninger …");
+      ({rader,ustedfestet}=aggreger(grp,bin,antallAar));
+    }
+    let tog={antall:togpunkter.length,snappet:0,feil:false,kilde:null};
+    if(togpunkter.length){
+      sett("Henter jernbanenettet fra Bane NOR …");
+      try{
+        const nett=await hentJernbane(togpunkter), t=aggregerTog(nett,togpunkter,bin,antallAar,maksAvstand);
+        rader=rader.concat(t.rader); tog.snappet=togpunkter.length-t.ustedfestet; tog.kilde=nett.kilde; tog.hentet=nett.hentet;
+      }catch(e){ tog.feil=true; }
+    }
+    rader.sort((a,b)=>b.antall-a.antall);
+    if(!rader.length) throw new Error(tog.feil?"Får ikke hentet jernbanenettet fra Geonorge. Prøv igjen senere.":`Ingen påkjørsler lå nærmere en vei eller bane enn ${maksAvstand} m. Prøv en større avstand.`);
+    let veifeil=0;
+    const veirader=rader.filter(r=>r.vegkategori!=="J");
+    if(toppAdt>0&&valgte.length&&veirader.length){
+      bar.value=0; bar.max=Math.min(toppAdt,veirader.length); sett("Henter veidata …",`0 av ${bar.max}`);
+      veifeil=await hentVeidata(veirader,toppAdt,bin,valgte,(g,t)=>{ bar.value=g; sett("Henter veidata …",`${g} av ${t}`); });
     }
     RADER=rader; streklag=null;
-    META.snappet=grp.filter(g=>g.nvdb).reduce((n,g)=>n+g.medlemmer.length,0);
-    META.ustedfestet=ustedfestet; META.bin=bin; META.maksAvstand=maksAvstand; META.grupper=grp.length;
-    $("lag").options[1].disabled=false;
-    $("lag").options[1].textContent="Strekninger";
-    $("lag").value="strekninger";
-    velgLag();
-    visListe();
-    sett("Ferdig.",`${rader.length} strekninger`);
+    META=Object.assign(META||{},{antall:veipunkter.length, snappet:veipunkter.length-ustedfestet, ustedfestet, tog, bin, maksAvstand,
+      oppslag:grp.length, antallAar, veidata:valgte, veidataFor:Math.min(toppAdt,veirader.length), veifeil, kjort:new Date().toISOString().slice(0,10)});
+    $("utdatert").classList.add("skjult");
+    visStrekninger();
+    sett("Ferdig.",`${tallf(rader.length)} strekninger`);
+    $("s5").scrollIntoView({behavior:"smooth",block:"start"});
   }catch(err){
-    const m=err.message;
-    $("feilboks").classList.remove("skjult");
-    if(m==="avbrutt") $("feilboks").innerHTML="<b>Avbrutt.</b> Trykk KARTFEST igjen for å fortsette — allerede hentede oppslag gjenbrukes.";
-    else if(m==="nett") $("feilboks").innerHTML="<b>Får ikke kontakt med vegnettstjenesten.</b> Sjekk nettforbindelsen. Åpnet du fila rett fra Filer, legg den heller på en nettadresse — noen nettlesere blokkerer API-kall fra <code>file://</code>.";
-    else $("feilboks").innerHTML="<b>Stoppet.</b> "+m;
+    const m=err.message, fb=$("feilboks"); fb.classList.remove("skjult");
+    if(m==="avbrutt") fb.textContent="Stoppet. Trykk «Finn strekningene» for å fortsette. Oppslag som allerede er gjort, brukes om igjen.";
+    else if(m==="nett") fb.textContent="Får ikke kontakt med Nasjonal vegdatabank. Sjekk nettforbindelsen og prøv igjen.";
+    else fb.textContent=m;
     sett("Stoppet.");
   } finally{ $("kjor").disabled=false; $("stopp").classList.add("skjult"); }
 });
-
-$("sortering").addEventListener("change",visListe);
-
-function visListe(){
-  if(!RADER) return;
-  $("resultatseksjon").classList.remove("skjult");
-  $("antallbins").textContent=RADER.length+" TOTALT";
-  const f=META.forkastet;
-  const ft=Object.keys(f).length?"\nForkastet: "+Object.entries(f).map(([k,v])=>`${k} ${v}`).join(", "):"";
-  $("sammendrag").textContent=
-    `Rader lest: ${META.inn}\nPåkjørsler med koordinat: ${META.etterFilter}\n`+
-    `Kartfestet mot veg: ${META.snappet} (${(META.snappet/META.etterFilter*100).toFixed(1)} %)\n`+
-    `Oppslag mot vegnettet: ${META.grupper} (punkter innen 20 m slått sammen)\n`+
-    `Strekningslengde ${META.bin} m · maks avstand til veg ${META.maksAvstand} m`+ft;
-  const felt=$("sortering").value;
-  const sortert=[...RADER].sort((a,b)=>(b[felt]??-1)-(a[felt]??-1));
-  const l=$("liste"); l.innerHTML="";
-  sortert.slice(0,100).forEach((r,i)=>{
-    const v=r[felt];
-    const d=document.createElement("div"); d.className="treff";
-    d.innerHTML=`<span class="rang">${i+1}</span>
-      <span class="vref">${r.vegsystemreferanse}
-        <small>${r.arter||""}${r.verste_maaned?" · verst i "+r.verste_maaned:""}</small></span>
-      <span class="ant">${v==null?"—":v}</span>`;
-    d.addEventListener("click",()=>{
-      $("lag").value="strekninger"; velgLag();
-      kart.setView([r.lat,r.lon],14);
-      const ks=$("kartseksjon");
-      if(ks.scrollIntoView) ks.scrollIntoView({behavior:"smooth",block:"start"});
-    });
-    l.appendChild(d);
-  });
-  if(sortert.length>100){
-    const p=document.createElement("div");
-    p.style.cssText="font-size:11px;color:var(--damp);padding:8px 2px";
-    p.textContent=`Viser de 100 øverste. Alle ${sortert.length} ligger i CSV-nedlastingen.`;
-    l.appendChild(p);
-  }
-  $("del").classList.toggle("skjult",!navigator.share);
+function kolonner(){
+  const k=[["vegsystemreferanse","Strekning",0],["kommune","Kommune",0],["antall","Påkjørsler",1],["per_km_per_aar","Per km per år",1]];
+  for(const v of Object.values(VEIDATA)) if(RADER.some(r=>r[v.kol[0][0]]!==undefined&&r[v.kol[0][0]]!==null)) k.push(...v.kol);
+  k.push(["verste_maaned","Flest i",0],["median_avstand_veg_m","Avstand til vei eller bane (m)",1],["arter","Arter",0]);
+  return k;
 }
+let KOL=[];
+function visStrekninger(){
+  if(!RADER) return;
+  $("s5").classList.remove("skjult");
+  $("lag").options[1].disabled=false;
+  $("antallbins").textContent=tallf(RADER.length)+" strekninger";
+  const tg=META&&META.tog;
+  if(META&&(META.antall||(tg&&tg.antall))) $("sammendrag").textContent=
+    (META.antall?`${tallf(META.snappet)} av ${tallf(META.antall)} påkjørsler med bil ble knyttet til en vei (${(META.snappet/META.antall*100).toFixed(1).replace(".",",")} %).`
+    +(META.ustedfestet?` ${tallf(META.ustedfestet)} lå mer enn ${META.maksAvstand} m fra nærmeste vei.`:""):"")
+    +(META.antall&&tg&&tg.antall?"\n":"")+(tg&&tg.antall?(tg.feil?`Togpåkjørslene er ikke med, fordi jernbanenettet ikke kunne hentes fra Geonorge.`
+      :`${tallf(tg.snappet)} av ${tallf(tg.antall)} togpåkjørsler ble knyttet til jernbanenettet.`+(tg.antall-tg.snappet?` ${tallf(tg.antall-tg.snappet)} lå mer enn ${META.maksAvstand} m fra nærmeste bane.`:"")):"")
+    +`\nStrekningslengde ${tallf(META.bin)} m. `+(META.antallAar?`Utvalget dekker ${META.antallAar} år.`:"")
+    +(META.veidata&&META.veidata.length&&META.veidataFor?`\nVeidata er hentet for de ${tallf(META.veidataFor)} veistrekningene med flest påkjørsler.`:"")
+    +(META.veifeil?` ${tallf(META.veifeil)} oppslag ga ikke svar.`:"");
+  $("lag").value="strekninger"; streklag=null; velgLag();
+  tegnTabell();
+}
+function tegnTabell(){
+  KOL=kolonner();
+  const hode=$("tabell").tHead.rows[0]; hode.innerHTML="";
+  for(const [felt,navn,tall] of KOL){
+    const th=document.createElement("th"); if(tall) th.className="t"; th.scope="col";
+    if(sorter.felt===felt) th.setAttribute("aria-sort",sorter.ned?"descending":"ascending");
+    const b=document.createElement("button"); b.type="button"; b.textContent=navn;
+    b.addEventListener("click",()=>{ sorter=sorter.felt===felt?{felt,ned:!sorter.ned}:{felt,ned:!!tall}; tegnTabell(); });
+    th.appendChild(b); hode.appendChild(th);
+  }
+  const q=$("sok").value.trim().toLowerCase().replace(/\s+/g,""), kat=$("vegkat").value;
+  let r=RADER.filter(x=>(!kat||x.vegkategori===kat)&&(!q||(x.vegsystemreferanse+(x.kommune||"")).toLowerCase().replace(/\s+/g,"").includes(q)));
+  const f=sorter.felt, tegn=sorter.ned?-1:1;
+  r.sort((a,b)=>{ const x=a[f], y=b[f]; if(x==null&&y==null) return 0; if(x==null) return 1; if(y==null) return -1;
+    return (typeof x==="number"?x-y:String(x).localeCompare(String(y),"nb"))*tegn; });
+  const tb=$("tabell").tBodies[0]; tb.innerHTML="";
+  for(const x of r.slice(0,300)){
+    const tr=document.createElement("tr"); tr.tabIndex=0;
+    tr.innerHTML=KOL.map(([felt,,tall])=>`<td${tall?' class="t"':""}>${x[felt]==null?"–":esc(typeof x[felt]==="number"?tallf(x[felt]):x[felt])}</td>`).join("");
+    const vis=()=>{ $("lag").value="strekninger"; velgLag(); kart.setView([x.lat,x.lon],14); if(x._m) x._m.openPopup();
+      if(window.matchMedia("(max-width:900px)").matches) $("kart").scrollIntoView({behavior:"smooth",block:"start"}); };
+    tr.addEventListener("click",vis); tr.addEventListener("keydown",e=>{ if(e.key==="Enter") vis(); });
+    tb.appendChild(tr);
+  }
+  $("tabellnote").textContent=r.length>300?`Viser de 300 første av ${tallf(r.length)}. Alle er med i nedlastingen.`
+    :`${tallf(r.length)} strekninger. Trykk på en rad for å se den på kartet.`;
+}
+$("sok").addEventListener("input",tegnTabell);
+$("vegkat").addEventListener("change",tegnTabell);
 
-/* ══ Eksport ══ */
+/* ══ Nedlasting ══ */
 function lastNed(navn,innhold,type){
   const url=URL.createObjectURL(new Blob([innhold],{type}));
   const a=document.createElement("a");
   a.href=url; a.download=navn; document.body.appendChild(a); a.click();
   setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},1500);
 }
-function csvTekst(){
-  const felt=Object.keys(RADER[0]).filter(k=>k!=="sok");
-  const esc=v=>{const s=v==null?"":String(v);
-    return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
-  return [felt.join(";"),...RADER.map(r=>felt.map(k=>esc(r[k])).join(";"))].join("\n");
+
+const csvCelle=v=>{ const s=v==null?"":String(v); return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+function tilCsv(rader,felt){ return "﻿"+[felt.join(";"),...rader.map(r=>felt.map(k=>csvCelle(r[k])).join(";"))].join("\n"); }
+function tilGeo(rader,felt){
+  return JSON.stringify({type:"FeatureCollection",features:rader.map(r=>({type:"Feature",
+    geometry:{type:"Point",coordinates:[r.lon,r.lat]},properties:Object.fromEntries(felt.map(k=>[k,r[k]??null]))}))});
 }
-function geojson(){
-  return JSON.stringify({type:"FeatureCollection",features:RADER.map((r,i)=>({
-    type:"Feature", geometry:{type:"Point",coordinates:[r.lon,r.lat]},
-    properties:Object.fromEntries(Object.entries(r).filter(([k])=>k!=="sok")
-      .concat([["rang",i+1]]))}))},null,1);
-}
-$("lastcsv").addEventListener("click",()=>lastNed("strekninger.csv","\uFEFF"+csvTekst(),"text/csv;charset=utf-8"));
-$("lastgeo").addEventListener("click",()=>lastNed("strekninger.geojson",geojson(),"application/geo+json"));
-$("del").addEventListener("click",async()=>{
-  const topp=RADER.slice(0,10).map((r,i)=>`${i+1}. ${r.vegsystemreferanse} — ${r.antall}`).join("\n");
-  const tekst=`Viltpåkjørsler per strekning\n\n${topp}\n\n${META.snappet} påkjørsler `
-    +`fordelt på ${RADER.length} strekninger.\nKilder: Hjorteviltregisteret, NVDB (Statens vegvesen).`;
-  try{
-    const fil=new File(["\uFEFF"+csvTekst()],"strekninger.csv",{type:"text/csv"});
-    if(navigator.canShare&&navigator.canShare({files:[fil]}))
-      await navigator.share({title:"Viltpåkjørsler",text:tekst,files:[fil]});
-    else await navigator.share({title:"Viltpåkjørsler",text:tekst});
-  }catch(e){/* avbrutt av bruker */}
+const SFELT=["vegsystemreferanse","veg","vegkategori","meter_fra","meter_til","kommune","antall","per_km_per_aar","adt","per_mill_kjt_km","fartsgrense","fartsgrenser","skiltet_viltfare","viltgjerde","belysning","arter","per_aar","per_maaned","verste_maaned","aar_dekket","median_avstand_veg_m","lat","lon"];
+const PFELT=["id","art","kjonn","alder","dato","aar","mnd","time","arsakTekst","utfall","knr","kommune","sted","lat","lon","ost","nord"];
+$("lastcsv").addEventListener("click",()=>lastNed("strekninger.csv",tilCsv(RADER,SFELT),"text/csv;charset=utf-8"));
+$("lastgeo").addEventListener("click",()=>lastNed("strekninger.geojson",tilGeo(RADER,SFELT),"application/geo+json"));
+$("punktCsv").addEventListener("click",()=>lastNed("paakjorsler-utvalg.csv",tilCsv(UTVALG,PFELT),"text/csv;charset=utf-8"));
+$("punktGeo").addEventListener("click",()=>lastNed("paakjorsler-utvalg.geojson",tilGeo(UTVALG,PFELT),"application/geo+json"));
+$("lagre").addEventListener("click",()=>{
+  const f={arsak:[...FILTER.arsak],art:[...FILTER.art],utfall:[...FILTER.utfall],mnd:[...FILTER.mnd],kjonn:[...FILTER.kjonn],alder:[...FILTER.alder],fylke:FILTER.fylke,kommune:FILTER.kommune,aarFra:FILTER.aarFra,aarTil:FILTER.aarTil};
+  const rader=RADER?RADER.map(r=>{ const k=Object.assign({},r); delete k._m; return k; }):null;
+  lastNed("viltkart-prosjekt.json",JSON.stringify({format:"veivakt-viltkart",versjon:2,lagret:new Date().toISOString(),punkter:ALLE,filter:f,rader,meta:META}),"application/json");
 });
 
 /* ══ Egentest ══ */
 (function(){
   const [o,n]=tilUtm33(63.415855,10.395287), [la,lo]=tilWgs84(o,n);
-  if(Math.abs(o-270232.03)>0.5||Math.abs(n-7040186.97)>0.5
-    ||Math.abs(la-63.415855)>1e-5||Math.abs(lo-10.395287)>1e-5)
+  if(Math.abs(o-270232.03)>0.5||Math.abs(n-7040186.97)>0.5||Math.abs(la-63.415855)>1e-5||Math.abs(lo-10.395287)>1e-5)
     console.warn("Koordinat-egentest feilet",o,n,la,lo);
 })();
 </script>
