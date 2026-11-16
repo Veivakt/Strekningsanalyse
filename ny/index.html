@@ -837,12 +837,12 @@ header.topp .merke{margin-left:0}
   </section>
 
   <section class="kort skjult" id="s4" aria-labelledby="t4">
-    <h2 id="t4"><span class="nr">4</span>Finn veistrekningene</h2>
-    <p>Hver påkjørsel med bil knyttes til nærmeste vei i Nasjonal vegdatabank og samles i like lange strekninger. Da ser du hvilke strekninger som har flest påkjørsler.</p>
+    <h2 id="t4"><span class="nr">4</span>Finn strekningene</h2>
+    <p>Hver påkjørsel med bil knyttes til nærmeste vei i Nasjonal vegdatabank, og hver påkjørsel med tog til nærmeste bane i Bane NORs jernbanenett. Påkjørslene samles i like lange strekninger. Da ser du hvilke strekninger som har flest påkjørsler.</p>
     <p class="hint" id="togmerknad"></p>
     <div class="rad2">
       <label class="felt">Lengde på strekning<select id="bin"><option value="250">250 m</option><option value="500" selected>500 m</option><option value="1000">1 km</option><option value="2000">2 km</option></select></label>
-      <label class="felt">Største avstand til vei<select id="maksavstand"><option value="30">30 m</option><option value="60" selected>60 m</option><option value="100">100 m</option><option value="200">200 m</option></select></label>
+      <label class="felt">Største avstand til vei eller bane<select id="maksavstand"><option value="30">30 m</option><option value="60" selected>60 m</option><option value="100">100 m</option><option value="200">200 m</option></select></label>
     </div>
     <fieldset><legend>Veidata fra Nasjonal vegdatabank</legend>
       <div class="chips" id="cVeidata">
@@ -872,7 +872,7 @@ header.topp .merke{margin-left:0}
     <div id="sammendrag" class="kvitt"></div>
     <div class="rad2">
       <label class="felt">Søk etter vei eller kommune<input type="search" id="sok" placeholder="f.eks. FV33 eller Gjøvik"></label>
-      <label class="felt">Veitype<select id="vegkat"><option value="">Alle</option><option value="E">Europavei</option><option value="R">Riksvei</option><option value="F">Fylkesvei</option><option value="K">Kommunal vei</option><option value="P">Privat vei</option></select></label>
+      <label class="felt">Type<select id="vegkat"><option value="">Alle</option><option value="J">Jernbane</option><option value="E">Europavei</option><option value="R">Riksvei</option><option value="F">Fylkesvei</option><option value="K">Kommunal vei</option><option value="P">Privat vei</option></select></label>
     </div>
     <div class="tabellboks"><table class="strek" id="tabell"><thead><tr></tr></thead><tbody></tbody></table></div>
     <p class="hint" id="tabellnote"></p>
@@ -897,7 +897,8 @@ header.topp .merke{margin-left:0}
       <li>Mange påkjørsler blir aldri registrert. Tallene er minimumstall.</li>
       <li>Punktene er satt av den som registrerte fallviltet, og nøyaktigheten varierer.</li>
       <li>Der to veier går parallelt, kan et punkt bli knyttet til feil vei. Se kolonnen «Avstand til vei».</li>
-      <li>Togpåkjørsler vises på kartet, men knyttes ikke til veinettet.</li>
+      <li>Togpåkjørsler knyttes til nærmeste bane og samles i strekninger etter banens kilometrering, for eksempel «Rørosbanen km 120–120,5». Der to baner går tett, kan et punkt havne på feil bane.</li>
+      <li>Verktøyet tar bare med hjortevilt: elg, hjort, rådyr, villrein og hjortedyr som ikke er artsbestemt. Andre arter i fila holdes utenfor.</li>
       <li>Når kartet er zoomet ut, samles påkjørsler som ligger nær hverandre, i en sirkel med antall. Sirklene følger kartutsnittet og er ikke det samme som strekningene i steg 5.</li>
       <li>Faste strekningsgrenser kan dele en opphopning i to. Prøv gjerne en annen strekningslengde.</li>
       <li>Veidata gjelder hele strekningen. Der det finnes flere verdier for ÅDT eller fartsgrense, vises den høyeste i tabellen.</li>
@@ -907,6 +908,7 @@ header.topp .merke{margin-left:0}
     <details><summary>Kilder</summary><ul>
       <li>Fallvilt: Hjorteviltregisteret, Miljødirektoratet.</li>
       <li>Veinett og trafikkmengde: Nasjonal vegdatabank, Statens vegvesen (NLOD).</li>
+      <li>Jernbanenett: Jernbane – Banenettverk, Bane NOR SF, via Geonorge (NLOD).</li>
       <li>Bakgrunnskart: © Kartverket.</li>
     </ul></details>
     <p class="fot">Verktøyet er laget av VeiVakt AS som del av arbeidet i forskningsprosjektet WILDETECT. Spørsmål og ønsker: <a href="mailto:benjamin@veivakten.no">benjamin@veivakten.no</a></p>
@@ -1089,6 +1091,8 @@ function lesDato(s){
   if((m=s.match(/[T\s](\d{1,2})[:.](\d{2})/))&&+m[1]<24) ut.time=+m[1];
   return ut;
 }
+/* WILDETECT gjelder hjortevilt. Andre arter leses ikke inn. Utvid listen her for å ta dem med. */
+const ARTER_MED=/^(elg|hjort|rådyr|villrein|dåhjort|sika|hjortedyr)/i;
 const stor=s=>s?s.charAt(0).toUpperCase()+s.slice(1).toLowerCase():s;
 function lesPunkter(rader,kart,excel){
   const punkter=[], forkastet={};
@@ -1115,10 +1119,12 @@ function lesPunkter(rader,kart,excel){
       if(excel&&/^0?\.\d+$/.test(ts)) d.time=Math.floor(+ts*24);
       else if((m=ts.match(/^(\d{1,2})[:.]\d{2}/))&&+m[1]<24) d.time=+m[1];
     }
+    const art=stor(celle(r,kart.art));
+    if(kart.art!==null&&art&&!ARTER_MED.test(art)){ tell("andre arter enn hjortevilt"); continue; }
     const aa=celle(r,kart.arsak), kt=celle(r,kart.kommune), kom=kt.match(/^(\d{4})\s+(.+)$/);
     const arsak=kart.arsak===null?"ukjent":RE_BIL.test(aa)?"bil":RE_TOG.test(aa)?"tog":"annet";
     punkter.push({ost:+ost.toFixed(2), nord:+nord.toFixed(2), lat:+lat.toFixed(6), lon:+lon.toFixed(6),
-      art:stor(celle(r,kart.art))||"Ukjent", aar:d.aar, mnd:d.mnd, time:d.time, dato:d.tekst,
+      art:art||"Ukjent", aar:d.aar, mnd:d.mnd, time:d.time, dato:d.tekst,
       kommune:kom?kom[2]:kt, knr:kom?kom[1]:"", arsak, arsakTekst:aa, utfall:celle(r,kart.utfall),
       kjonn:celle(r,kart.kjonn), alder:celle(r,kart.alder), sted:celle(r,kart.sted), id:celle(r,kart.id)});
   }
@@ -1234,6 +1240,110 @@ function aggreger(grp,bin,antallAar){
     });
   }
   rader.sort((a,b)=>b.antall-a.antall);
+  return {rader, ustedfestet};
+}
+/* ══ Jernbanenett fra Bane NOR ══ */
+const JB_FIL="/jernbane.json", JB_CELLE=2000;
+const JB_WFS="https://wfs.geonorge.no/skwms1/wfs.banenettverk?service=WFS&version=2.0.0&request=GetFeature&typeNames=app:Banelenke&srsName=urn:ogc:def:crs:EPSG::25833";
+let JERNBANE=null;
+function lesBanelenker(tekst){
+  const dok=new DOMParser().parseFromString(tekst,"application/xml");
+  if(dok.getElementsByTagName("parsererror").length) throw new Error("jernbane");
+  const ut=[];
+  for(const el of dok.getElementsByTagNameNS("*","Banelenke")){
+    const felt={}; let pos=[];
+    for(const d of el.getElementsByTagName("*")){
+      const n=d.localName;
+      if(n==="posList") pos=pos.concat(d.textContent.trim().split(/\s+/).map(Number));
+      else if(!d.children.length&&d.textContent.trim()&&!(n in felt)) felt[n]=d.textContent.trim();
+    }
+    if(pos.length<4) continue;
+    let k=[]; for(let i=0;i+1<pos.length;i+=2) k.push(pos[i],pos[i+1]);
+    if(k[0]>3e6) k=k.map((v,i)=>i%2?k[i-1]:k[i+1]);
+    const navn=Object.entries(felt).find(([a])=>/navn/i.test(a)), st=Object.entries(felt).find(([a])=>/status$/i.test(a));
+    if(st&&/^p$/i.test(st[1])) continue;
+    const f=parseFloat(felt.startposisjon), t=parseFloat(felt.sluttposisjon);
+    ut.push({n:navn?navn[1]:"", f:isFinite(f)?f:null, t:isFinite(t)?t:null, s:st?st[1]:"", k});
+  }
+  return ut;
+}
+function byggJernbane(lenker,kilde,hentet){
+  const nett={lenker:[],rute:new Map(),kilde,hentet};
+  lenker.forEach((l,li)=>{
+    const k=l.k, cum=[0];
+    for(let i=2;i<k.length;i+=2) cum.push(cum[cum.length-1]+Math.hypot(k[i]-k[i-2],k[i+1]-k[i-1]));
+    nett.lenker.push({n:l.n||"Ukjent bane",f:l.f,t:l.t,k,cum,lengde:cum[cum.length-1]});
+    for(let i=0;i+3<k.length;i+=2){
+      const x0=Math.floor(Math.min(k[i],k[i+2])/JB_CELLE), x1=Math.floor(Math.max(k[i],k[i+2])/JB_CELLE);
+      const y0=Math.floor(Math.min(k[i+1],k[i+3])/JB_CELLE), y1=Math.floor(Math.max(k[i+1],k[i+3])/JB_CELLE);
+      for(let x=x0;x<=x1;x++) for(let y=y0;y<=y1;y++){ const n=x+"_"+y; if(!nett.rute.has(n)) nett.rute.set(n,[]); nett.rute.get(n).push(li,i/2); }
+    }
+  });
+  return nett;
+}
+async function hentJernbane(punkter){
+  if(JERNBANE&&JERNBANE.full) return JERNBANE;
+  try{
+    const r=await fetch(JB_FIL,{cache:"no-cache"});
+    if(r.ok){ const d=await r.json(); if(d.lenker&&d.lenker.length){ JERNBANE=byggJernbane(d.lenker,"fil",d.hentet); JERNBANE.full=true; return JERNBANE; } }
+  }catch(e){}
+  const m=1000, xs=punkter.map(p=>p.ost), ys=punkter.map(p=>p.nord);
+  const bb=[Math.min(...xs)-m,Math.min(...ys)-m,Math.max(...xs)+m,Math.max(...ys)+m].map(Math.round);
+  if(JERNBANE&&JERNBANE.bb&&JERNBANE.bb[0]<=bb[0]&&JERNBANE.bb[1]<=bb[1]&&JERNBANE.bb[2]>=bb[2]&&JERNBANE.bb[3]>=bb[3]) return JERNBANE;
+  let r;
+  try{ r=await fetch(`${JB_WFS}&bbox=${bb.join(",")},urn:ogc:def:crs:EPSG::25833`); }catch(e){ throw new Error("jernbane"); }
+  if(!r.ok) throw new Error("jernbane");
+  const lenker=lesBanelenker(await r.text());
+  if(!lenker.length) throw new Error("jernbane");
+  JERNBANE=byggJernbane(lenker,"wfs",new Date().toISOString().slice(0,10)); JERNBANE.bb=bb;
+  return JERNBANE;
+}
+function knyttTilBane(nett,p,maks){
+  const cx=Math.floor(p.ost/JB_CELLE), cy=Math.floor(p.nord/JB_CELLE), r=Math.ceil(maks/JB_CELLE);
+  let best=null, sett=new Set();
+  for(let x=cx-r;x<=cx+r;x++) for(let y=cy-r;y<=cy+r;y++){
+    const liste=nett.rute.get(x+"_"+y); if(!liste) continue;
+    for(let i=0;i<liste.length;i+=2){
+      const li=liste[i], si=liste[i+1], nk=li+":"+si; if(sett.has(nk)) continue; sett.add(nk);
+      const k=nett.lenker[li].k, ax=k[si*2], ay=k[si*2+1], bx=k[si*2+2], by=k[si*2+3], dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy;
+      const t=L2?Math.max(0,Math.min(1,((p.ost-ax)*dx+(p.nord-ay)*dy)/L2)):0;
+      const d=Math.hypot(p.ost-ax-t*dx,p.nord-ay-t*dy);
+      if(d<=maks&&(!best||d<best.avstand)) best={li,si,t,avstand:d};
+    }
+  }
+  if(!best) return null;
+  const l=nett.lenker[best.li], s=l.cum[best.si]+best.t*(l.cum[best.si+1]-l.cum[best.si]);
+  const km=(l.f!=null&&l.t!=null&&l.lengde>0)?l.f+(l.t-l.f)*s/l.lengde:s/1000;
+  return {navn:l.n, km, avstand:best.avstand};
+}
+const kmTekst=m=>(m/1000).toLocaleString("nb-NO",{minimumFractionDigits:m%1000?1:0,maximumFractionDigits:2});
+function aggregerTog(nett,punkter,bin,antallAar,maks){
+  const bins=new Map(); let ustedfestet=0;
+  for(const p of punkter){
+    const b0=knyttTilBane(nett,p,maks);
+    if(!b0){ ustedfestet++; continue; }
+    const b=Math.floor(b0.km*1000/bin), n=b0.navn+"|"+b;
+    if(!bins.has(n)) bins.set(n,{navn:b0.navn,b,antall:0,arter:new Map(),aar:new Map(),mnd:new Array(12).fill(0),ost:[],nord:[],avstander:[],kommuner:new Map()});
+    const s=bins.get(n);
+    s.antall++; s.arter.set(p.art,(s.arter.get(p.art)||0)+1);
+    if(p.aar) s.aar.set(p.aar,(s.aar.get(p.aar)||0)+1);
+    if(p.mnd) s.mnd[p.mnd-1]++;
+    if(p.kommune) s.kommuner.set(p.kommune,(s.kommuner.get(p.kommune)||0)+1);
+    s.ost.push(p.ost); s.nord.push(p.nord); s.avstander.push(b0.avstand);
+  }
+  const snitt=a=>a.reduce((x,y)=>x+y,0)/a.length, rader=[];
+  for(const s of bins.values()){
+    const mFra=s.b*bin, mTil=(s.b+1)*bin, aar=antallAar||s.aar.size||1;
+    const avst=s.avstander.slice().sort((a,b)=>a-b), [la,lo]=tilWgs84(snitt(s.ost),snitt(s.nord));
+    const topp=Math.max(...s.mnd), ti=s.mnd.indexOf(topp), ref=`${s.navn} km ${kmTekst(mFra)}–${kmTekst(mTil)}`;
+    rader.push({vegsystemreferanse:ref, sok:ref, veg:"Jernbane", vegkategori:"J", meter_fra:mFra, meter_til:mTil,
+      kommune:s.kommuner.size?[...s.kommuner.entries()].sort((a,b)=>b[1]-a[1])[0][0]:null,
+      antall:s.antall, per_km_per_aar:+(s.antall/(bin/1000)/aar).toFixed(2), adt:null, per_mill_kjt_km:null,
+      arter:[...s.arter.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${v}`).join(", "),
+      per_aar:[...s.aar.entries()].sort((a,b)=>a[0]-b[0]).map(([k,v])=>`${k}: ${v}`).join(", "),
+      per_maaned:s.mnd.join(","), verste_maaned:topp>0?MND[ti]:null, aar_dekket:antallAar||s.aar.size||null,
+      median_avstand_veg_m:+avst[Math.floor(avst.length/2)].toFixed(1), lat:+la.toFixed(6), lon:+lo.toFixed(6)});
+  }
   return {rader, ustedfestet};
 }
 /* ══ Veidata fra NVDB ══ */
@@ -1367,12 +1477,13 @@ function oppdater(){
   $("utvalgtall").textContent=`${tallf(UTVALG.length)} av ${tallf(ALLE.length)}`;
   byggFilter(); tegnStatistikk(); tegnPunkter(false);
   const bil=UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet").length, tog=UTVALG.filter(p=>p.arsak==="tog").length;
-  $("togmerknad").textContent=`${tallf(bil)} påkjørsler i utvalget blir knyttet til veinettet.`
-    +(tog?` ${tallf(tog)} togpåkjørsler vises på kartet, men holdes utenfor.`:"");
+  $("togmerknad").textContent=[bil?`${tallf(bil)} påkjørsler med bil blir knyttet til veinettet.`:"",
+    tog?`${tallf(tog)} påkjørsler med tog blir knyttet til jernbanenettet fra Bane NOR.`:"",
+    !bil&&!tog?"Utvalget har ingen påkjørsler med bil eller tog.":""].filter(Boolean).join(" ");
   if(bil){ const g=new Set(); for(const p of UTVALG) if(p.arsak!=="tog"&&p.arsak!=="annet") g.add(Math.round(p.ost/20)+"_"+Math.round(p.nord/20));
     const min=Math.ceil(g.size/5*0.35/60);
     $("togmerknad").textContent+=` Det gir om lag ${tallf(g.size)} oppslag`+(min>=2?`, som kan ta rundt ${tallf(min)} minutter. Velg et fylke eller en kommune for å gå raskere.`:"."); }
-  $("kjor").disabled=!bil;
+  $("kjor").disabled=!bil&&!tog;
   if(RADER) $("utdatert").classList.remove("skjult");
   if($("lag").value==="punkter") visTegnPunkter();
 }
@@ -1475,7 +1586,7 @@ function strekPopup(r){
     ${r.adt!=null?rad("Trafikk (ÅDT)",tallf(r.adt))+rad("Per mill. kjøretøykm",r.per_mill_kjt_km!=null?tallf(r.per_mill_kjt_km):"–"):""}
     ${r.fartsgrense!=null?rad("Fartsgrense",(r.fartsgrenser||r.fartsgrense)+" km/t"):""}${r.skiltet_viltfare?rad("Skiltet viltfare",r.skiltet_viltfare):""}
     ${r.viltgjerde?rad("Viltgjerde",r.viltgjerde):""}${r.belysning?rad("Veibelysning",r.belysning):""}
-    ${rad("Avstand til vei",r.median_avstand_veg_m!=null?tallf(r.median_avstand_veg_m)+" m":"–")}</table>
+    ${rad(r.vegkategori==="J"?"Avstand til bane":"Avstand til vei",r.median_avstand_veg_m!=null?tallf(r.median_avstand_veg_m)+" m":"–")}</table>
     ${mnd.some(v=>v>0)?`<div class="mini" role="img" aria-label="Fordeling per måned">${mnd.map((v,i)=>`<i style="height:${Math.max(3,v/mm*100)}%" title="${MND[i]}: ${v}"></i>`).join("")}</div><div style="font-size:11px;color:#46617F;display:flex;justify-content:space-between"><span>jan</span><span>des</span></div>`:""}
     <div style="margin-top:6px"><a href="https://norgeskart.no/#!?project=norgeskart&layers=1002&zoom=15&lat=${r.lat}&lon=${r.lon}" target="_blank" rel="noopener">Norgeskart</a> ·
     <a href="https://www.google.com/maps/search/?api=1&query=${r.lat},${r.lon}" target="_blank" rel="noopener">Google Maps</a></div></div>`;
@@ -1573,8 +1684,8 @@ $("zoomut").addEventListener("click",()=>{
 /* ══ Strekninger ══ */
 $("stopp").addEventListener("click",()=>{ avbryt=true; $("statustekst").textContent="Stopper …"; });
 $("kjor").addEventListener("click",async()=>{
-  const veipunkter=UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet");
-  if(!veipunkter.length) return;
+  const veipunkter=UTVALG.filter(p=>p.arsak!=="tog"&&p.arsak!=="annet"), togpunkter=UTVALG.filter(p=>p.arsak==="tog");
+  if(!veipunkter.length&&!togpunkter.length) return;
   avbryt=false;
   const bin=+$("bin").value, maksAvstand=+$("maksavstand").value, toppAdt=+$("toppadt").value;
   const valgte=[...document.querySelectorAll("#cVeidata input:checked")].map(e=>e.value);
@@ -1586,20 +1697,33 @@ $("kjor").addEventListener("click",async()=>{
   const bar=$("bar");
   try{
     const grp=grupper(veipunkter);
-    bar.value=0; bar.max=grp.length; sett("Knytter påkjørslene til veinettet …",`0 av ${tallf(grp.length)}`);
-    await snapAlle(grp,maksAvstand,(g,t)=>{ bar.value=g; sett("Knytter påkjørslene til veinettet …",`${tallf(g)} av ${tallf(t)}`); });
-    if(avbryt) throw new Error("avbrutt");
-    sett("Samler i strekninger …");
-    const {rader,ustedfestet}=aggreger(grp,bin,antallAar);
-    if(!rader.length) throw new Error(`Ingen påkjørsler lå nærmere en vei enn ${maksAvstand} m. Prøv en større avstand.`);
+    let rader=[], ustedfestet=0;
+    if(grp.length){
+      bar.value=0; bar.max=grp.length; sett("Knytter påkjørslene til veinettet …",`0 av ${tallf(grp.length)}`);
+      await snapAlle(grp,maksAvstand,(g,t)=>{ bar.value=g; sett("Knytter påkjørslene til veinettet …",`${tallf(g)} av ${tallf(t)}`); });
+      if(avbryt) throw new Error("avbrutt");
+      sett("Samler i strekninger …");
+      ({rader,ustedfestet}=aggreger(grp,bin,antallAar));
+    }
+    let tog={antall:togpunkter.length,snappet:0,feil:false,kilde:null};
+    if(togpunkter.length){
+      sett("Henter jernbanenettet fra Bane NOR …");
+      try{
+        const nett=await hentJernbane(togpunkter), t=aggregerTog(nett,togpunkter,bin,antallAar,maksAvstand);
+        rader=rader.concat(t.rader); tog.snappet=togpunkter.length-t.ustedfestet; tog.kilde=nett.kilde; tog.hentet=nett.hentet;
+      }catch(e){ tog.feil=true; }
+    }
+    rader.sort((a,b)=>b.antall-a.antall);
+    if(!rader.length) throw new Error(tog.feil?"Får ikke hentet jernbanenettet fra Geonorge. Prøv igjen senere.":`Ingen påkjørsler lå nærmere en vei eller bane enn ${maksAvstand} m. Prøv en større avstand.`);
     let veifeil=0;
-    if(toppAdt>0&&valgte.length){
-      bar.value=0; bar.max=Math.min(toppAdt,rader.length); sett("Henter veidata …",`0 av ${bar.max}`);
-      veifeil=await hentVeidata(rader,toppAdt,bin,valgte,(g,t)=>{ bar.value=g; sett("Henter veidata …",`${g} av ${t}`); });
+    const veirader=rader.filter(r=>r.vegkategori!=="J");
+    if(toppAdt>0&&valgte.length&&veirader.length){
+      bar.value=0; bar.max=Math.min(toppAdt,veirader.length); sett("Henter veidata …",`0 av ${bar.max}`);
+      veifeil=await hentVeidata(veirader,toppAdt,bin,valgte,(g,t)=>{ bar.value=g; sett("Henter veidata …",`${g} av ${t}`); });
     }
     RADER=rader; streklag=null;
-    META=Object.assign(META||{},{antall:veipunkter.length, snappet:veipunkter.length-ustedfestet, ustedfestet, bin, maksAvstand,
-      oppslag:grp.length, antallAar, veidata:valgte, veidataFor:Math.min(toppAdt,rader.length), veifeil, kjort:new Date().toISOString().slice(0,10)});
+    META=Object.assign(META||{},{antall:veipunkter.length, snappet:veipunkter.length-ustedfestet, ustedfestet, tog, bin, maksAvstand,
+      oppslag:grp.length, antallAar, veidata:valgte, veidataFor:Math.min(toppAdt,veirader.length), veifeil, kjort:new Date().toISOString().slice(0,10)});
     $("utdatert").classList.add("skjult");
     visStrekninger();
     sett("Ferdig.",`${tallf(rader.length)} strekninger`);
@@ -1615,7 +1739,7 @@ $("kjor").addEventListener("click",async()=>{
 function kolonner(){
   const k=[["vegsystemreferanse","Strekning",0],["kommune","Kommune",0],["antall","Påkjørsler",1],["per_km_per_aar","Per km per år",1]];
   for(const v of Object.values(VEIDATA)) if(RADER.some(r=>r[v.kol[0][0]]!==undefined&&r[v.kol[0][0]]!==null)) k.push(...v.kol);
-  k.push(["verste_maaned","Flest i",0],["median_avstand_veg_m","Avstand til vei (m)",1],["arter","Arter",0]);
+  k.push(["verste_maaned","Flest i",0],["median_avstand_veg_m","Avstand til vei eller bane (m)",1],["arter","Arter",0]);
   return k;
 }
 let KOL=[];
@@ -1624,11 +1748,14 @@ function visStrekninger(){
   $("s5").classList.remove("skjult");
   $("lag").options[1].disabled=false;
   $("antallbins").textContent=tallf(RADER.length)+" strekninger";
-  if(META&&META.antall) $("sammendrag").textContent=
-    `${tallf(META.snappet)} av ${tallf(META.antall)} påkjørsler ble knyttet til en vei (${(META.snappet/META.antall*100).toFixed(1).replace(".",",")} %).`
-    +(META.ustedfestet?` ${tallf(META.ustedfestet)} lå mer enn ${META.maksAvstand} m fra nærmeste vei.`:"")
+  const tg=META&&META.tog;
+  if(META&&(META.antall||(tg&&tg.antall))) $("sammendrag").textContent=
+    (META.antall?`${tallf(META.snappet)} av ${tallf(META.antall)} påkjørsler med bil ble knyttet til en vei (${(META.snappet/META.antall*100).toFixed(1).replace(".",",")} %).`
+    +(META.ustedfestet?` ${tallf(META.ustedfestet)} lå mer enn ${META.maksAvstand} m fra nærmeste vei.`:""):"")
+    +(META.antall&&tg&&tg.antall?"\n":"")+(tg&&tg.antall?(tg.feil?`Togpåkjørslene er ikke med, fordi jernbanenettet ikke kunne hentes fra Geonorge.`
+      :`${tallf(tg.snappet)} av ${tallf(tg.antall)} togpåkjørsler ble knyttet til jernbanenettet.`+(tg.antall-tg.snappet?` ${tallf(tg.antall-tg.snappet)} lå mer enn ${META.maksAvstand} m fra nærmeste bane.`:"")):"")
     +`\nStrekningslengde ${tallf(META.bin)} m. `+(META.antallAar?`Utvalget dekker ${META.antallAar} år.`:"")
-    +(META.veidata&&META.veidata.length&&META.veidataFor?`\nVeidata er hentet for de ${tallf(META.veidataFor)} strekningene med flest påkjørsler.`:"")
+    +(META.veidata&&META.veidata.length&&META.veidataFor?`\nVeidata er hentet for de ${tallf(META.veidataFor)} veistrekningene med flest påkjørsler.`:"")
     +(META.veifeil?` ${tallf(META.veifeil)} oppslag ga ikke svar.`:"");
   $("lag").value="strekninger"; streklag=null; velgLag();
   tegnTabell();
