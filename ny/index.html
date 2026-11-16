@@ -1289,7 +1289,7 @@ function skrivLager(){
 function tomLager(){
   cache.clear(); lagerNye=[];
   try{ if(lagerDb) lagerDb.transaction("posisjon","readwrite").objectStore("posisjon").clear(); }catch(e){}
-  oppdater();
+  if(ALLE&&ALLE.length) oppdater(); else $("tomlager").classList.add("skjult");
 }
 /* Felles fartsstyring: NVDB oppgir hvor mange oppslag som gjenstår i kvoten (x-ratelimit-remaining).
    Verktøyet senker farten når kvoten nærmer seg tom, slik at NVDB ikke trenger å avvise oppslag. */
@@ -1298,7 +1298,7 @@ async function hentTrygt(url){
   for(let i=0;i<6;i++){
     if(avbryt) throw new Error("avbrutt");
     const v=ventTil-Date.now(); if(v>0) await pause(v);
-    if(kvote!==null&&kvote<12){ await pause(kvote<5?450:200); }
+    if(kvote!==null&&kvote<18){ await pause(kvote<8?500:250); }
     let r;
     try{ r=await fetch(url,{headers:{"Accept":"application/json"}}); }
     catch(e){ if(i>=3) throw new Error("nett"); await pause(500*2**i); continue; }
